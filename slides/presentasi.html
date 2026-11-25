@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klasifikasi Nilai Transaksi E-Commerce Olist · Kelompok 1</title>
+<!-- Huruf: Big Shoulders Display (judul, gaya label pengiriman), IBM Plex Mono (label & kode), IBM Plex Sans (isi) -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+
+/* === THEME: label pengiriman di atas kardus. Ubah warna di sini === */
+:root{
+  --stage-bg:#4a3622; --slide-bg:#b98d5e;
+  --label:#fbf8f1; --ink:#141414; --muted:#5b544a;
+  --green:#0b7a3e;   /* satu-satunya aksen: stempel dan hasil terbaik */
+  --red:#b3261e;     /* hanya untuk "terlambat" */
+  --f-display:'Big Shoulders Display',sans-serif;
+  --f-mono:'IBM Plex Mono',monospace;
+  --f-body:'IBM Plex Sans',sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+
+/* 1. Lock the browser viewport */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 2. Full-window deck viewport */
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 3. Fixed 16:9 design canvas.
+   JavaScript sets transform: translate(...) scale(...). */
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+/* 4. Slides stack inside the fixed stage.
+   Content must be laid out at 1920×1080, not reflowed per device. */
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* 5. Keep media inside authored slide bounds */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* 6. Presentation chrome stays outside the slide design system */
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 7. Print one fixed-size slide per page */
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .deck-controls {
+        display: none !important;
+    }
+}
+
+/* 8. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* === KARDUS: latar setiap slide === */
+.slide{font-family:var(--f-body);color:var(--ink);background:
+  radial-gradient(1200px 700px at 20% 10%,rgba(255,255,255,.12),transparent 60%),
+  repeating-linear-gradient(8deg,rgba(0,0,0,.035) 0 2px,transparent 2px 7px),
+  linear-gradient(160deg,#c49a69,#a87b4d)}
+.tape{position:absolute;width:200px;height:120px;background:rgba(240,226,190,.78);z-index:2}
+
+/* === LABEL: kartu putih bergaris tebal; sel dipisah garis 3px lewat gap === */
+.label{position:absolute;left:110px;top:84px;width:1700px;height:912px;background:var(--label);border:6px solid var(--ink);
+  display:flex;flex-direction:column;box-shadow:0 14px 0 -6px rgba(0,0,0,.16)}
+.title .label{top:110px;height:860px}
+.hd{display:flex;justify-content:space-between;padding:16px 34px;border-bottom:3px solid var(--ink);
+  font:600 18px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ttl{padding:22px 34px 24px;border-bottom:3px solid var(--ink)}
+h1{font:800 120px/.92 var(--f-display);text-transform:uppercase;letter-spacing:.005em}
+h2{font:800 86px/.95 var(--f-display);text-transform:uppercase;letter-spacing:.005em}
+.cells{flex:1;min-height:0;display:grid;gap:3px;background:var(--ink)}
+.cell{background:var(--label);padding:28px 34px;display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.cell.center{justify-content:center}
+
+/* === TEKS === */
+.k{font:600 18px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.t{font:500 34px/1.32 var(--f-body)}
+.t-sm{font:500 28px/1.38 var(--f-body)}
+.t-sm+.t-sm{margin-top:12px}
+.num{font:800 190px/.9 var(--f-display);letter-spacing:-.01em;margin-bottom:22px}
+.num.red,.red{color:var(--red)}
+.mono{font:500 24px/1.55 var(--f-mono)}
+.mono-sm{font:500 18px/1.4 var(--f-mono);color:var(--muted);margin-top:8px}
+code{font-family:var(--f-mono);font-size:.86em;background:#ece6d8;padding:2px 8px}
+s{text-decoration-thickness:3px}
+.verdict{font:800 64px/1 var(--f-display);text-transform:uppercase;margin:14px 0 10px}
+
+/* === KOMPONEN === */
+.route{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font:700 30px/1 var(--f-mono)}
+.route span{padding:10px 14px;border:3px solid var(--ink)}
+.flow{display:flex;align-items:stretch;gap:18px}
+.flow i{font:700 40px/1 var(--f-mono);align-self:center;font-style:normal}
+.node{flex:1;border:3px solid var(--ink);padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.node b{font:800 44px/1 var(--f-display);text-transform:uppercase}
+.node span{font:500 20px/1.3 var(--f-mono);color:var(--muted)}
+.node.green{border-color:var(--green);border-width:5px}
+.node.green b{color:var(--green)}
+.barcode{height:120px;background:repeating-linear-gradient(90deg,var(--ink) 0 4px,transparent 4px 7px,var(--ink) 7px 9px,transparent 9px 14px,var(--ink) 14px 20px,transparent 20px 23px)}
+.shot{display:block;max-width:100%;max-height:100%;border:3px solid var(--ink);object-fit:contain}
+figure{display:flex;flex-direction:column;min-width:0}
+.stats p{font:500 30px/1.2 var(--f-body);margin-bottom:14px;white-space:nowrap}
+.stats b{display:block;font:800 76px/1 var(--f-display)}
+.pack{border-collapse:collapse;width:100%;font:500 26px/1 var(--f-mono)}
+.pack td{padding:9px 0;border-bottom:2px dashed #cfc6b4}
+.pack td:last-child{text-align:right;font-weight:700}
+.ledger{list-style:none}
+.ledger li{font:500 30px/1.25 var(--f-body);padding:14px 0;border-bottom:2px dashed #cfc6b4}
+.ledger li b{font:800 46px/1 var(--f-display);margin-right:12px}
+.ledger.small li{font:500 24px/1.3 var(--f-mono);padding:10px 0}
+.ledger.small li b{font:700 24px/1 var(--f-mono);margin-right:4px}
+.rule .t{font-size:32px}
+
+/* === GRAFIK SVG === */
+.chart{width:100%;height:100%}
+.chart .gl{stroke:#d8d0bf;stroke-width:2}
+.chart .ax{font:500 20px var(--f-mono);fill:var(--muted)}
+.chart .line{fill:none;stroke:var(--ink);stroke-width:5;stroke-linejoin:round}
+.chart .dot{fill:var(--ink)}
+.chart .peak{fill:var(--green)}
+.chart .ann{font:700 24px var(--f-mono);fill:var(--ink)}
+
+/* === BAR PERBANDINGAN MODEL === */
+.bar-row{display:grid;grid-template-columns:420px 1fr 150px 190px;align-items:center;gap:24px;padding:12px 0;border-bottom:2px dashed #cfc6b4}
+.bar-row.head{border-bottom:3px solid var(--ink);font:600 18px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.bn{font:600 30px/1.1 var(--f-body)}
+.track{position:relative;height:46px;display:flex;align-items:center}
+.fill{height:46px;width:0;background:var(--ink);transition:width .9s var(--ease) .3s}
+.slide.visible .fill{width:var(--w)}
+.bv{margin-left:14px;font:700 28px/1 var(--f-mono)}
+.bc{font:600 28px/1 var(--f-mono);text-align:right}
+.bar-row.best .fill{background:var(--green)}
+.bar-row.best .bn,.bar-row.best .bv{color:var(--green)}
+
+/* === STEMPEL: muncul sekali saat slide tampil === */
+.stamp{position:absolute;z-index:3;border:6px solid var(--green);color:var(--green);padding:12px 26px;
+  font:800 54px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;background:rgba(251,248,241,.55);
+  opacity:0;transform:rotate(var(--rot,-8deg)) scale(1.3)}
+.stamp.red{border-color:var(--red);color:var(--red)}
+.slide.visible .stamp{animation:stamp .35s .75s cubic-bezier(.3,1.4,.5,1) forwards}
+@keyframes stamp{to{opacity:.94;transform:rotate(var(--rot,-8deg)) scale(1)}}
+
+/* === ANIMASI MASUK (bertahap) === */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.slide.visible .reveal{opacity:1;transform:none}
+.r1{transition-delay:.06s}.r2{transition-delay:.16s}.r3{transition-delay:.28s}.r4{transition-delay:.4s}.r5{transition-delay:.52s}
+
+/* === KONTROL DI LUAR PANGGUNG: nomor slide + tombol edit === */
+.deck-controls{font:600 15px/1 'IBM Plex Mono',monospace;color:#e9dcc6;letter-spacing:.12em;background:rgba(0,0,0,.35);padding:8px 14px}
+.edit-hotzone{position:fixed;top:0;left:0;width:80px;height:80px;z-index:10000;cursor:pointer}
+.edit-toggle{position:fixed;top:16px;left:16px;z-index:10001;opacity:0;pointer-events:none;transition:opacity .3s;
+  font:600 14px 'IBM Plex Mono',monospace;background:#fbf8f1;border:3px solid #141414;padding:8px 12px;cursor:pointer}
+.edit-toggle.show,.edit-toggle.active{opacity:1;pointer-events:auto}
+body.editing [contenteditable="true"]{outline:2px dashed var(--green);outline-offset:4px}
+/* Mode ekspor PDF (presentasi.html?export): sembunyikan nomor slide di bawah */
+body.export .deck-controls,body.export .edit-toggle{display:none}
+
+</style>
+</head>
+<body>
+<div class="edit-hotzone" aria-hidden="true"></div>
+<button class="edit-toggle" id="editToggle" title="Edit teks (E)">Edit</button>
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+<section class="slide title" aria-label="Judul">
+<div class="tape" style="left:860px;top:38px;transform:rotate(-3deg)"></div>
+<div class="label">
+ <div class="cells" style="grid-template-columns:1.55fr 1fr;grid-template-rows:auto 1fr auto">
+  <div class="cell" style="grid-column:1/3"><div class="k reveal r1">Proyek Akhir Big Data 2026 · Kelompok 1</div>
+   <h1 class="reveal r2">Klasifikasi nilai transaksi e&#8209;commerce Olist</h1></div>
+  <div class="cell"><div class="k reveal r3">Rute data</div>
+   <div class="route reveal r3"><span>Kaggle</span>→<span>HDFS</span>→<span>Spark</span>→<span>MLlib</span>→<span>MongoDB</span></div>
+   <p class="t reveal r4" style="margin-top:30px">98.199 pesanan · 9 tabel · Brasil 2016–2018</p></div>
+  <div class="cell"><div class="k reveal r3">Pengirim</div>
+   <p class="mono reveal r4">Mohammad Ariffansyah<br>[Nama Anggota 2]<br>[Nama Anggota 3]<br>[Nama Anggota 4]</p></div>
+  <div class="cell"><div class="barcode reveal r4"></div><p class="mono reveal r5" style="margin-top:12px">S1 Teknik Informatika · Universitas Negeri Surabaya</p></div>
+  <div class="cell"><div class="k reveal r4">Penerima</div><p class="mono reveal r5">Ersha Aisyah Elfaiz, S.Si., M.T.I.</p></div>
+ </div>
+</div>
+<div class="stamp" style="left:1190px;top:300px;--rot:-9deg">Pembelian Tinggi?</div>
+</section>
+<section class="slide" aria-label="Pertanyaan penelitian">
+<div class="label"><div class="hd"><span>02 · Pertanyaan</span><span>Kelompok 1 · 02/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Apa yang membuat sebuah pesanan bernilai tinggi?</h2></div>
+ <div class="cells" style="grid-template-columns:1fr 1fr">
+  <div class="cell"><div class="k reveal r2">Label</div>
+   <p class="t reveal r2"><b>Pembelian Tinggi</b> jika total harga barang ≥ median <b>86,90 BRL</b>, selain itu <b>Pembelian Rendah</b>.</p>
+   <p class="mono reveal r3" style="margin-top:auto">49.119 Tinggi · 49.080 Rendah: kelas seimbang</p></div>
+  <div class="cell"><div class="k reveal r3">Syarat</div>
+   <p class="t reveal r3">Ditebak dari atribut yang ada saat pesanan dibuat: berat, ongkir, kategori, cicilan, lokasi.</p>
+   <p class="t reveal r4" style="margin-top:18px"><b>Harga tidak boleh dipakai</b>, karena harga adalah jawabannya.</p></div>
+ </div>
+</div>
+<div class="stamp" style="left:1330px;top:760px;--rot:-7deg">Tanpa harga</div>
+</section>
+<section class="slide" aria-label="Kenapa klasifikasi">
+<div class="label"><div class="hd"><span>03 · Pilihan masalah</span><span>Kelompok 1 · 03/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Kenapa klasifikasi, bukan clustering pelanggan?</h2></div>
+ <div class="cells" style="grid-template-columns:1.25fr 1fr">
+  <div class="cell center"><p class="num reveal r2">96,96%</p>
+   <p class="t reveal r3">pelanggan Olist hanya berbelanja <b>satu kali</b>.</p>
+   <p class="mono reveal r4" style="margin-top:22px">92.096 dari 94.983 pelanggan · hasil Spark SQL</p></div>
+  <div class="cell"><div class="k reveal r3">Akibatnya</div>
+   <p class="t reveal r3">Frekuensi belanja hampir sama untuk semua orang, jadi pola pembelian per pelanggan sangat tipis.</p>
+   <p class="t reveal r4" style="margin-top:26px">→ Kami mengklasifikasikan <b>setiap transaksi</b>, sesuai pilihan kedua di topik Kelompok 1.</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Dataset">
+<div class="tape" style="left:40px;top:900px;transform:rotate(-14deg)"></div>
+<div class="label"><div class="hd"><span>04 · Dataset</span><span>Kelompok 1 · 04/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Isi paket: 9 tabel Olist</h2></div>
+ <div class="cells" style="grid-template-columns:1.15fr 1fr">
+  <div class="cell"><div class="k reveal r2">Daftar isi · baris</div>
+   <table class="pack reveal r2"><tr><td>customers</td><td>99.441</td></tr><tr><td>geolocation</td><td>1.000.163</td></tr><tr><td>order_items</td><td>112.650</td></tr><tr><td>payments</td><td>103.886</td></tr><tr><td>reviews</td><td>99.224</td></tr><tr><td>orders</td><td>99.441</td></tr><tr><td>products</td><td>32.951</td></tr><tr><td>sellers</td><td>3.095</td></tr><tr><td>category_translation</td><td>71</td></tr></table></div>
+  <div class="cell"><p class="num reveal r3">1,55 jt</p>
+   <p class="t reveal r3">baris data mentah · 120,3 MB · Brasil 2016–2018</p>
+   <div class="k reveal r4" style="margin-top:auto">Sumber</div>
+   <p class="mono reveal r4">Kaggle · olistbr/brazilian-ecommerce<br>Lisensi CC BY-NC-SA 4.0</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Arsitektur">
+<div class="label"><div class="hd"><span>05 · Arsitektur</span><span>Kelompok 1 · 05/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Rute data dari Kaggle sampai aplikasi</h2></div>
+ <div class="cells" style="grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr auto">
+  <div class="cell" style="grid-column:1/4;justify-content:center">
+   <div class="flow reveal r2">
+    <div class="node"><b>Kaggle</b><span>9 CSV</span></div><i>→</i>
+    <div class="node"><b>HDFS</b><span>/olist/raw</span></div><i>→</i>
+    <div class="node"><b>Spark</b><span>ETL + 6 kueri SQL</span></div><i>→</i>
+    <div class="node"><b>HDFS</b><span>/olist/curated (Parquet)</span></div>
+   </div>
+   <div class="flow reveal r3" style="margin-top:34px">
+    <i style="visibility:hidden">→</i><div class="node"><b>Spark MLlib</b><span>DT · RF · GBT</span></div><i>→</i>
+    <div class="node"><b>HDFS</b><span>model + prediksi</span></div><i>+</i>
+    <div class="node green"><b>MongoDB</b><span>olist.predictions</span></div><i>→</i>
+    <div class="node"><b>Aplikasi</b><span>Next.js</span></div>
+   </div></div>
+  <div class="cell"><div class="k reveal r4">Container</div><p class="t-sm reveal r4">namenode · datanode · spark · mongo (Podman)</p></div>
+  <div class="cell"><div class="k reveal r4">Satu perintah</div><p class="t-sm reveal r5"><code>./run.sh</code> menjalankan semuanya, ± 10 menit</p></div>
+  <div class="cell"><div class="k reveal r4">Bisa diulang</div><p class="t-sm reveal r5">Dijalankan ulang, hasilnya sama persis</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Bukti HDFS">
+<div class="label"><div class="hd"><span>06 · HDFS</span><span>Kelompok 1 · 06/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Data mentah tersimpan di HDFS</h2></div>
+ <div class="cells" style="grid-template-columns:1.62fr 1fr">
+  <div class="cell center"><img class="shot reveal r2" src="assets/hdfs-raw.png" alt="HDFS UI: isi direktori /olist/raw berisi 9 berkas CSV"></div>
+  <div class="cell"><div class="k reveal r2">Perintah</div>
+   <p class="mono reveal r3">hdfs dfs -mkdir -p /olist/raw<br>hdfs dfs -put -f *.csv /olist/raw<br>hdfs dfs -du -s -h /olist/raw</p>
+   <div class="k reveal r4" style="margin-top:34px">Hasil</div>
+   <p class="t reveal r4">9 berkas · 120,3 MB · replikasi 1, karena ada satu datanode</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Di mana big data-nya">
+<div class="label"><div class="hd"><span>07 · Big data</span><span>Kelompok 1 · 07/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Bukan ukurannya, tapi cara mengolahnya</h2></div>
+ <div class="cells" style="grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto 1fr">
+  <div class="cell"><div class="k reveal r2">HDFS</div><p class="t-sm reveal r2">Berkas dipecah jadi blok dan disebar ke datanode. Mau lebih besar? Tambah node.</p></div>
+  <div class="cell"><div class="k reveal r2">Spark</div><p class="t-sm reveal r3">Data dibagi partisi, diproses paralel di memori oleh 12 core.</p></div>
+  <div class="cell"><div class="k reveal r2">MLlib</div><p class="t-sm reveal r3">Model dilatih langsung di atas data terdistribusi.</p></div>
+  <div class="cell" style="grid-column:1/4;flex-direction:row;gap:40px;align-items:center">
+   <div class="stats reveal r4"><p><b>41.205</b> task</p><p><b>20,6 GiB</b> dibaca</p><p><b>3,8 GiB</b> shuffle</p></div>
+   <figure class="reveal r5" style="flex:1"><img class="shot" src="assets/spark-executors.png" alt="Spark UI Executors: 12 core, 41.205 task selesai, input 20,6 GiB"><figcaption class="mono-sm">Spark UI · Executors, selama tahap MLlib</figcaption></figure>
+  </div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Pembersihan data">
+<div class="label"><div class="hd"><span>08 · Spark ETL</span><span>Kelompok 1 · 08/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Data kotor masuk, data bersih keluar</h2></div>
+ <div class="cells" style="grid-template-columns:1.1fr 1fr">
+  <div class="cell"><div class="k reveal r2">Dibuang / dirapikan</div>
+   <ul class="ledger">
+    <li class="reveal r2"><b>261.831</b> baris geolokasi duplikat</li>
+    <li class="reveal r3"><b>1.234</b> pesanan batal atau tidak tersedia</li>
+    <li class="reveal r3"><b>551</b> ulasan ganda, diambil yang terakhir</li>
+    <li class="reveal r4"><b>33</b> koordinat di luar Brasil</li>
+    <li class="reveal r4"><b>3</b> pembayaran tanpa jenis</li>
+   </ul></div>
+  <div class="cell"><p class="num reveal r3">98.199</p>
+   <p class="t reveal r4">pesanan bersih · 35 kolom · Parquet di HDFS</p>
+   <p class="mono reveal r5" style="margin-top:auto">9 tabel digabung per pesanan + jarak penjual–pembeli (Haversine) + rasio ongkir</p></div>
+ </div>
+</div>
+<div class="stamp" style="left:1330px;top:650px;--rot:-10deg">Bersih</div>
+</section>
+<section class="slide" aria-label="Temuan keterlambatan">
+<div class="label"><div class="hd"><span>09 · Spark SQL</span><span>Kelompok 1 · 09/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Paket terlambat, ulasan anjlok</h2></div>
+ <div class="cells" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr auto">
+  <div class="cell center"><div class="k reveal r2">Tepat waktu · 89.443 pesanan</div>
+   <p class="num reveal r2">4,29</p><p class="t reveal r3">rata-rata ulasan (1–5)</p>
+   <p class="mono reveal r3">9,27% ulasan buruk</p></div>
+  <div class="cell center"><div class="k reveal r3">Terlambat · 6.381 pesanan</div>
+   <p class="num red reveal r3">2,27</p><p class="t reveal r4">rata-rata ulasan (1–5)</p>
+   <p class="mono reveal r4">62,42% ulasan buruk</p></div>
+  <div class="cell" style="grid-column:1/3"><p class="t-sm reveal r5">6,66% pesanan terlambat. Tertinggi di MA (17,43%), terendah di PR (4,04%). Kueri: <code>GROUP BY</code> + <code>AVG</code> + <code>HAVING COUNT(*) &gt;= 500</code></p></div>
+ </div>
+</div>
+<div class="stamp red" style="left:1420px;top:330px;--rot:8deg">Terlambat</div>
+</section>
+<section class="slide" aria-label="Tren penjualan">
+<div class="label"><div class="hd"><span>10 · Spark SQL</span><span>Kelompok 1 · 10/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Penjualan naik, puncaknya Black Friday</h2></div>
+ <div class="cells" style="grid-template-columns:1.75fr 1fr">
+  <div class="cell"><div class="k reveal r2">Pendapatan barang per bulan</div><div class="reveal r2" style="flex:1;min-height:0"><svg viewBox="0 0 1000 470" class="chart" role="img" aria-label="Pendapatan bulanan Olist, puncak 2017-11">
+<line x1="86" x2="976" y1="410.0" y2="410.0" class="gl"/><text x="74" y="418.0" class="ax" text-anchor="end">0</text><line x1="86" x2="976" y1="325.9" y2="325.9" class="gl"/><text x="74" y="333.9" class="ax" text-anchor="end">250</text><line x1="86" x2="976" y1="241.8" y2="241.8" class="gl"/><text x="74" y="249.8" class="ax" text-anchor="end">500</text><line x1="86" x2="976" y1="157.7" y2="157.7" class="gl"/><text x="74" y="165.7" class="ax" text-anchor="end">750</text><line x1="86" x2="976" y1="73.6" y2="73.6" class="gl"/><text x="74" y="81.6" class="ax" text-anchor="end">1000</text><text x="86.0" y="452" class="ax" text-anchor="middle">2016-10</text><text x="308.5" y="452" class="ax" text-anchor="middle">2017-05</text><text x="575.5" y="452" class="ax" text-anchor="middle">2017-11</text><text x="842.5" y="452" class="ax" text-anchor="middle">2018-05</text>
+<polyline points="86.0,395.0 130.5,369.6 175.0,327.6 219.5,286.1 264.0,291.0 308.5,240.8 353.0,265.4 397.5,244.4 442.0,218.9 486.5,201.0 531.0,187.9 575.5,72.3 620.0,160.4 664.5,92.0 709.0,128.2 753.5,80.0 798.0,75.8 842.5,76.0 887.0,119.6 931.5,114.7 976.0,124.5" class="line"/>
+<circle cx="86.0" cy="395.0" r="6" class="dot"/><circle cx="130.5" cy="369.6" r="6" class="dot"/><circle cx="175.0" cy="327.6" r="6" class="dot"/><circle cx="219.5" cy="286.1" r="6" class="dot"/><circle cx="264.0" cy="291.0" r="6" class="dot"/><circle cx="308.5" cy="240.8" r="6" class="dot"/><circle cx="353.0" cy="265.4" r="6" class="dot"/><circle cx="397.5" cy="244.4" r="6" class="dot"/><circle cx="442.0" cy="218.9" r="6" class="dot"/><circle cx="486.5" cy="201.0" r="6" class="dot"/><circle cx="531.0" cy="187.9" r="6" class="dot"/><circle cx="575.5" cy="72.3" r="6" class="dot"/><circle cx="620.0" cy="160.4" r="6" class="dot"/><circle cx="664.5" cy="92.0" r="6" class="dot"/><circle cx="709.0" cy="128.2" r="6" class="dot"/><circle cx="753.5" cy="80.0" r="6" class="dot"/><circle cx="798.0" cy="75.8" r="6" class="dot"/><circle cx="842.5" cy="76.0" r="6" class="dot"/><circle cx="887.0" cy="119.6" r="6" class="dot"/><circle cx="931.5" cy="114.7" r="6" class="dot"/><circle cx="976.0" cy="124.5" r="6" class="dot"/>
+<circle cx="575.5" cy="72.3" r="13" class="peak"/>
+<text x="557.5" y="48.3" class="ann" text-anchor="end">Nov 2017 · Black Friday</text>
+<text x="86" y="22" class="ax">ribu BRL</text>
+</svg></div></div>
+  <div class="cell"><div class="k reveal r3">Cara bayar</div>
+   <p class="num reveal r3">77%</p>
+   <p class="t reveal r4">pesanan dibayar kartu kredit, rata-rata 3,51 kali cicilan</p>
+   <p class="mono reveal r5" style="margin-top:auto">boleto 19,89% · voucher 1,56% · debit 1,54%</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Setup machine learning">
+<div class="label"><div class="hd"><span>11 · Spark MLlib</span><span>Kelompok 1 · 11/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Model menebak tanpa melihat harga</h2></div>
+ <div class="cells" style="grid-template-columns:1fr 1.2fr 1.2fr;grid-template-rows:1fr auto">
+  <div class="cell"><div class="k reveal r2">Label</div><p class="t reveal r2">≥ 86,90 BRL → <b>Tinggi</b></p><p class="t reveal r3">selain itu → <b>Rendah</b></p></div>
+  <div class="cell"><div class="k reveal r2">Fitur · 22 numerik + 4 kategori</div><p class="t-sm reveal r3">Berat, dimensi, ongkir, rasio ongkir per item/kg/km, cicilan, kategori, lokasi, waktu beli</p></div>
+  <div class="cell"><div class="k reveal r2">Sengaja dibuang</div><p class="t-sm reveal r3"><s>harga</s>, <s>nilai bayar</s>: pembentuk label<br><s>ulasan</s>, <s>keterlambatan</s>: baru diketahui setelah selesai</p></div>
+  <div class="cell" style="grid-column:1/4">
+   <div class="route reveal r4"><span>StringIndexer</span>→<span>Imputer</span>→<span>VectorAssembler</span>→<span>DT · RF · GBT</span></div>
+   <p class="mono reveal r5" style="margin-top:18px">Latih 78.357 / uji 19.842 (split hash 80/20) · 3-fold CV, 27 kombinasi kedalaman pohon</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Hasil model">
+<div class="label"><div class="hd"><span>12 · Hasil</span><span>Kelompok 1 · 12/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Random Forest paling akurat</h2></div>
+ <div class="cells" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr auto">
+  <div class="cell" style="grid-column:1/3">
+   <div class="bar-row head reveal r2"><span class="bn">Model</span><span class="track-h">F1 data uji · sumbu mulai 0,5 (tebakan acak)</span><span class="bc">AUC</span><span class="bc">Latih (dtk)</span></div>
+   <div class="reveal r3"><div class="bar-row best">
+ <span class="bn">Random Forest</span>
+ <span class="track"><span class="fill" style="--w:80.5%"></span><span class="bv">0,9023</span></span>
+ <span class="bc">0,967</span><span class="bc">103,2</span></div><div class="bar-row">
+ <span class="bn">GBT</span>
+ <span class="track"><span class="fill" style="--w:77.6%"></span><span class="bv">0,8881</span></span>
+ <span class="bc">0,957</span><span class="bc">61,9</span></div><div class="bar-row">
+ <span class="bn">Decision Tree (tuning)</span>
+ <span class="track"><span class="fill" style="--w:69.1%"></span><span class="bv">0,8455</span></span>
+ <span class="bc">0,872</span><span class="bc">3,3</span></div><div class="bar-row">
+ <span class="bn">DT tanpa fitur rasio</span>
+ <span class="track"><span class="fill" style="--w:66.2%"></span><span class="bv">0,8311</span></span>
+ <span class="bc">0,868</span><span class="bc">3,1</span></div><div class="bar-row">
+ <span class="bn">DT dangkal (4 tingkat)</span>
+ <span class="track"><span class="fill" style="--w:50.5%"></span><span class="bv">0,7525</span></span>
+ <span class="bc">0,792</span><span class="bc">1,4</span></div></div></div>
+  <div class="cell"><div class="k reveal r4">Kenapa lebih baik</div><p class="t-sm reveal r4">Rata-rata 50 pohon mengurangi kesalahan satu pohon, dan probabilitasnya lebih halus. Unggul 5,7 poin F1 dari Decision Tree.</p></div>
+  <div class="cell"><div class="k reveal r4">Harganya</div><p class="t-sm reveal r5">Latih 103 dtk vs 3,3 dtk, dan aturannya tidak bisa dibaca. Fitur rasio menambah 1,4 poin pada Decision Tree.</p></div>
+ </div>
+</div>
+<div class="stamp" style="left:1330px;top:150px;--rot:-8deg">Terbaik</div>
+</section>
+<section class="slide" aria-label="Aturan pohon dangkal">
+<div class="label"><div class="hd"><span>13 · Decision Tree</span><span>Kelompok 1 · 13/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Aturan yang bisa dibaca manusia</h2></div>
+ <div class="cells" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">
+  <div class="cell rule"><div class="k reveal r2">Jika</div><p class="t reveal r2">berat ≤ 1,2 kg dan ongkir ≤ 15,39 BRL</p><p class="verdict reveal r3">→ Rendah</p><p class="mono reveal r3">kecuali dicicil lebih dari 7 kali</p></div>
+  <div class="cell rule"><div class="k reveal r2">Jika</div><p class="t reveal r3">berat &gt; 1,2 kg</p><p class="verdict reveal r3">→ Tinggi</p><p class="mono reveal r4">kecuali ongkir ≤ 17,92 BRL dan tanpa cicilan</p></div>
+  <div class="cell rule"><div class="k reveal r3">Jika kategori</div><p class="t reveal r4">kesehatan-kecantikan, jam, komputer, parfum, olahraga</p><p class="verdict reveal r4">→ Tinggi bila &gt; 254,5 g</p></div>
+  <div class="cell rule"><div class="k reveal r3">Pohon 4 tingkat</div><p class="t reveal r4">19 simpul · F1 uji 0,7525 · latih 0,7536</p><p class="t-sm reveal r5" style="margin-top:14px">Kurang akurat, tapi bisa dijelaskan ke tim bisnis dan tidak <i>overfitting</i>.</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Eksperimen skala data">
+<div class="label"><div class="hd"><span>14 · Eksperimen skala</span><span>Kelompok 1 · 14/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">40× data, hanya 4,5× waktu</h2></div>
+ <div class="cells" style="grid-template-columns:1.6fr 1fr">
+  <div class="cell"><div class="k reveal r2">Waktu latih Decision Tree (rata-rata 3 kali)</div><div class="reveal r2" style="flex:1;min-height:0"><svg viewBox="0 0 1000 500" class="chart" role="img" aria-label="Waktu latih Decision Tree terhadap jumlah baris data latih">
+<line x1="80" x2="960" y1="430.0" y2="430.0" class="gl"/><text x="68" y="438.0" class="ax" text-anchor="end">0</text><line x1="80" x2="960" y1="352.0" y2="352.0" class="gl"/><text x="68" y="360.0" class="ax" text-anchor="end">2</text><line x1="80" x2="960" y1="274.0" y2="274.0" class="gl"/><text x="68" y="282.0" class="ax" text-anchor="end">4</text><line x1="80" x2="960" y1="196.0" y2="196.0" class="gl"/><text x="68" y="204.0" class="ax" text-anchor="end">6</text><line x1="80" x2="960" y1="118.0" y2="118.0" class="gl"/><text x="68" y="126.0" class="ax" text-anchor="end">8</text><line x1="80" x2="960" y1="40.0" y2="40.0" class="gl"/><text x="68" y="48.0" class="ax" text-anchor="end">10</text><text x="80.0" y="472" class="ax" text-anchor="middle">0rb</text><text x="346.7" y="472" class="ax" text-anchor="middle">100rb</text><text x="613.3" y="472" class="ax" text-anchor="middle">200rb</text><text x="880.0" y="472" class="ax" text-anchor="middle">300rb</text>
+<polyline points="100.9,351.6 132.0,329.0 184.3,311.4 289.0,284.1 497.9,210.0 915.8,76.3" class="line"/>
+<circle cx="100.9" cy="351.6" r="9" class="dot"/><text x="104.9" y="305.6" class="ann" text-anchor="start">2,01 dtk</text><circle cx="289.0" cy="284.1" r="9" class="dot"/><text x="273.0" y="262.1" class="ann" text-anchor="end">3,74 dtk</text><circle cx="497.9" cy="210.0" r="9" class="peak"/><text x="481.9" y="188.0" class="ann" text-anchor="end">5,64 dtk</text><circle cx="915.8" cy="76.3" r="9" class="peak"/><text x="899.8" y="54.3" class="ann" text-anchor="end">9,07 dtk</text>
+<circle cx="132.0" cy="329.0" r="7" class="dot"/><circle cx="184.3" cy="311.4" r="7" class="dot"/>
+<text x="80" y="22" class="ax">detik</text>
+<text x="960" y="496" class="ax" text-anchor="end">baris data latih</text>
+</svg></div></div>
+  <div class="cell"><div class="k reveal r3">F1 makin naik</div><ul class="ledger small reveal r3"><li><b>10%</b> · 7.827 baris<br>2,01 dtk · <b>F1 0,7595</b></li><li><b>25%</b> · 19.486 baris<br>2,59 dtk · <b>F1 0,7859</b></li><li><b>50%</b> · 39.121 baris<br>3,04 dtk · <b>F1 0,8157</b></li><li><b>100%</b> · 78.357 baris<br>3,74 dtk · <b>F1 0,8455</b></li></ul>
+   <p class="t-sm reveal r4" style="margin-top:20px">Belum mendatar, jadi data lebih banyak masih membantu.</p>
+   <p class="mono reveal r5" style="margin-top:auto">2× dan 4× = data latih diduplikasi, hanya waktunya yang diukur</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="MongoDB dan aplikasi">
+<div class="label"><div class="hd"><span>15 · MongoDB</span><span>Kelompok 1 · 15/16</span></div>
+ <div class="ttl"><h2 class="reveal r1">Hasil siap dipakai aplikasi</h2></div>
+ <div class="cells" style="grid-template-columns:1.45fr 1fr">
+  <div class="cell center"><img class="shot reveal r2" src="assets/app.png" alt="Aplikasi demo Next.js menampilkan prediksi satu transaksi dari MongoDB"></div>
+  <div class="cell"><div class="k reveal r2">Koleksi</div>
+   <p class="t-sm reveal r3"><code>olist.predictions</code>: 19.842 dokumen prediksi</p>
+   <p class="t-sm reveal r3"><code>olist.metrics</code>: riwayat setiap pelatihan</p>
+   <div class="k reveal r4" style="margin-top:26px">Kenapa bukan HDFS saja?</div>
+   <p class="t-sm reveal r4">HDFS untuk berkas besar yang dibaca Spark. MongoDB untuk mencari satu pesanan dalam milidetik.</p>
+   <p class="mono reveal r5" style="margin-top:auto">Demo: ./run.sh app → localhost:3000</p></div>
+ </div>
+</div>
+</section>
+<section class="slide" aria-label="Kesimpulan">
+<div class="label"><div class="hd"><span>16 · Kesimpulan</span><span>Kelompok 1 · 16/16</span></div>
+ <div class="cells" style="grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto 1fr">
+  <div class="cell"><div class="k reveal r1">Pipeline</div><p class="t-sm reveal r1">HDFS → Spark → MLlib → MongoDB, satu perintah, hasil bisa diulang</p></div>
+  <div class="cell"><div class="k reveal r2">Model</div><p class="t-sm reveal r2">Random Forest F1 0,90 · AUC 0,97; Decision Tree 0,85</p></div>
+  <div class="cell"><div class="k reveal r3">Keterbatasan</div><p class="t-sm reveal r3">Satu laptop, satu datanode, ± 100 ribu pesanan; RF dan GBT belum di-tuning</p></div>
+  <div class="cell" style="grid-column:1/4;justify-content:center"><h1 class="reveal r4">Terima kasih</h1><div class="barcode reveal r5" style="margin-top:26px;width:900px"></div></div>
+ </div>
+</div>
+<div class="stamp" style="left:1320px;top:640px;--rot:-9deg">Tanya jawab</div>
+</section>
+</main>
+</div>
+<div class="deck-controls" id="counter" aria-live="polite"></div>
+<script>
+
+/* === KONTROLER PRESENTASI: skala panggung, navigasi, nomor slide, #nomor di URL === */
+class SlidePresentation{
+  constructor(){
+    this.slides=[...document.querySelectorAll('.slide')];
+    this.stage=document.getElementById('deckStage');
+    this.counter=document.getElementById('counter');
+    this.current=0;
+    this.scale(); addEventListener('resize',()=>this.scale());
+    this.keys(); this.touch(); this.wheel();
+    const n=parseInt(location.hash.slice(1),10);
+    this.show(Number.isFinite(n)?n-1:0);
+  }
+  scale(){
+    const f=Math.min(innerWidth/1920,innerHeight/1080);
+    this.stage.style.transform=`translate(${(innerWidth-1920*f)/2}px,${(innerHeight-1080*f)/2}px) scale(${f})`;
+  }
+  show(i){
+    this.current=Math.max(0,Math.min(i,this.slides.length-1));
+    this.slides.forEach((s,k)=>{s.classList.toggle('active',k===this.current);s.classList.toggle('visible',k===this.current);});
+    this.counter.textContent=`${String(this.current+1).padStart(2,'0')} / ${this.slides.length}`;
+    history.replaceState(null,'',`#${this.current+1}`);
+  }
+  editing(){return document.body.classList.contains('editing');}
+  keys(){
+    addEventListener('keydown',e=>{
+      if(this.editing()&&!['Escape'].includes(e.key))return;
+      if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();this.show(this.current+1);}
+      if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();this.show(this.current-1);}
+      if(e.key==='Home')this.show(0);
+      if(e.key==='End')this.show(this.slides.length-1);
+    });
+  }
+  touch(){
+    let x=null;
+    addEventListener('touchstart',e=>{x=e.touches[0].clientX;},{passive:true});
+    addEventListener('touchend',e=>{if(x===null||this.editing())return;const d=e.changedTouches[0].clientX-x;if(Math.abs(d)>50)this.show(this.current+(d<0?1:-1));x=null;});
+  }
+  wheel(){
+    let lock=false;
+    addEventListener('wheel',e=>{if(lock||this.editing()||Math.abs(e.deltaY)<20)return;lock=true;this.show(this.current+(e.deltaY>0?1:-1));setTimeout(()=>lock=false,700);},{passive:true});
+  }
+}
+
+/* === EDIT LANGSUNG: tombol muncul di pojok kiri atas (hover) atau tekan E; Ctrl+S menyimpan file === */
+class Editor{
+  constructor(){
+    this.key='olist-deck-v1';this.isActive=false;this.restore();
+    this.btn=document.getElementById('editToggle');
+    this.btn.addEventListener('click',()=>this.toggle());
+    const zone=document.querySelector('.edit-hotzone');let t=null;
+    const show=()=>{clearTimeout(t);this.btn.classList.add('show');};
+    const hide=()=>{t=setTimeout(()=>{if(!this.isActive)this.btn.classList.remove('show');},400);};
+    zone.addEventListener('mouseenter',show);zone.addEventListener('mouseleave',hide);
+    this.btn.addEventListener('mouseenter',show);this.btn.addEventListener('mouseleave',hide);
+    zone.addEventListener('click',()=>this.toggle());
+    addEventListener('keydown',e=>{
+      if((e.key==='e'||e.key==='E')&&!e.target.isContentEditable)this.toggle();
+      if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();this.download();}
+    });
+  }
+  targets(){return [...document.querySelectorAll('.slide h1,.slide h2,.slide p,.slide li,.slide .k,.slide .stamp,.slide .node b,.slide .node span,.slide td')];}
+  toggle(){
+    this.isActive=!this.isActive;document.body.classList.toggle('editing',this.isActive);
+    this.targets().forEach(el=>el.contentEditable=this.isActive);
+    this.btn.classList.toggle('active',this.isActive);this.btn.textContent=this.isActive?'Selesai edit':'Edit';
+    if(!this.isActive)this.save();
+  }
+  save(){try{localStorage.setItem(this.key,JSON.stringify(this.targets().map(e=>e.innerHTML)));}catch(e){}}
+  restore(){try{const d=JSON.parse(localStorage.getItem(this.key)||'null');const t=this.targets();if(d&&d.length===t.length)t.forEach((el,i)=>el.innerHTML=d[i]);}catch(e){}}
+  download(){
+    this.save();
+    const clone=document.documentElement.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
+    clone.querySelector('body').classList.remove('editing');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['<!DOCTYPE html>\n'+clone.outerHTML],{type:'text/html'}));
+    a.download='presentasi.html';a.click();
+  }
+}
+if(new URLSearchParams(location.search).has('export'))document.body.classList.add('export');
+new SlidePresentation(); new Editor();
+
+</script>
+</body>
+</html>

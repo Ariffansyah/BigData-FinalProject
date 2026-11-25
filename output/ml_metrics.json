@@ -1,0 +1,285 @@
+{
+  "accuracy": 0.9024,
+  "weightedPrecision": 0.9032,
+  "weightedRecall": 0.9024,
+  "f1": 0.9023,
+  "precisionByLabel_tinggi": 0.8855,
+  "recallByLabel_tinggi": 0.9243,
+  "fMeasureByLabel_tinggi": 0.9045,
+  "precisionByLabel_rendah": 0.9208,
+  "recallByLabel_rendah": 0.8804,
+  "fMeasureByLabel_rendah": 0.9001,
+  "auc": 0.9674,
+  "run_at": "2026-11-24T17:32:06.541944+00:00",
+  "model": "Random Forest",
+  "train_f1": 0.9978,
+  "threshold_brl": 86.9,
+  "train_rows": 78357,
+  "test_rows": 19842,
+  "dt_max_depth": 15,
+  "dt_min_instances_per_node": 1,
+  "dt_num_nodes": 6333,
+  "dt_test_f1": 0.8455,
+  "dt_train_f1": 0.9304,
+  "dt_cv_seconds": 136.63,
+  "label_counts": {
+    "0": 49080,
+    "1": 49119
+  },
+  "cv": [
+    [
+      2,
+      1,
+      0.697
+    ],
+    [
+      2,
+      20,
+      0.697
+    ],
+    [
+      2,
+      50,
+      0.697
+    ],
+    [
+      4,
+      1,
+      0.7535
+    ],
+    [
+      4,
+      20,
+      0.7535
+    ],
+    [
+      4,
+      50,
+      0.7535
+    ],
+    [
+      6,
+      1,
+      0.7706
+    ],
+    [
+      6,
+      20,
+      0.7705
+    ],
+    [
+      6,
+      50,
+      0.7704
+    ],
+    [
+      8,
+      1,
+      0.7874
+    ],
+    [
+      8,
+      20,
+      0.7863
+    ],
+    [
+      8,
+      50,
+      0.7852
+    ],
+    [
+      10,
+      1,
+      0.8088
+    ],
+    [
+      10,
+      20,
+      0.8058
+    ],
+    [
+      10,
+      50,
+      0.8019
+    ],
+    [
+      12,
+      1,
+      0.823
+    ],
+    [
+      12,
+      20,
+      0.8188
+    ],
+    [
+      12,
+      50,
+      0.8115
+    ],
+    [
+      15,
+      1,
+      0.8339
+    ],
+    [
+      15,
+      20,
+      0.8255
+    ],
+    [
+      15,
+      50,
+      0.8156
+    ],
+    [
+      20,
+      1,
+      0.8328
+    ],
+    [
+      20,
+      20,
+      0.8261
+    ],
+    [
+      20,
+      50,
+      0.8154
+    ],
+    [
+      25,
+      1,
+      0.8304
+    ],
+    [
+      25,
+      20,
+      0.8261
+    ],
+    [
+      25,
+      50,
+      0.8154
+    ]
+  ],
+  "comparison": [
+    [
+      "Decision Tree dangkal",
+      "maxDepth=4",
+      0.7535,
+      0.7536,
+      0.7528,
+      0.7525,
+      0.7924,
+      1.39
+    ],
+    [
+      "Decision Tree (fitur dasar)",
+      "maxDepth=15, minInstancesPerNode=1",
+      null,
+      0.921,
+      0.8311,
+      0.8311,
+      0.8679,
+      3.13
+    ],
+    [
+      "Decision Tree",
+      "maxDepth=15, minInstancesPerNode=1",
+      0.8339,
+      0.9304,
+      0.8455,
+      0.8455,
+      0.8722,
+      3.32
+    ],
+    [
+      "Random Forest",
+      "numTrees=50, maxDepth=20",
+      null,
+      0.9978,
+      0.9024,
+      0.9023,
+      0.9674,
+      103.22
+    ],
+    [
+      "GBT",
+      "maxIter=100, maxDepth=6",
+      null,
+      0.9139,
+      0.8881,
+      0.8881,
+      0.957,
+      61.9
+    ]
+  ],
+  "metrics_per_model": {
+    "Decision Tree dangkal": {
+      "accuracy": 0.7528,
+      "weightedPrecision": 0.7542,
+      "weightedRecall": 0.7528,
+      "f1": 0.7525,
+      "precisionByLabel_tinggi": 0.7729,
+      "recallByLabel_tinggi": 0.7163,
+      "fMeasureByLabel_tinggi": 0.7436,
+      "precisionByLabel_rendah": 0.7354,
+      "recallByLabel_rendah": 0.7893,
+      "fMeasureByLabel_rendah": 0.7614,
+      "auc": 0.7924
+    },
+    "Decision Tree (fitur dasar)": {
+      "accuracy": 0.8311,
+      "weightedPrecision": 0.8311,
+      "weightedRecall": 0.8311,
+      "f1": 0.8311,
+      "precisionByLabel_tinggi": 0.8262,
+      "recallByLabel_tinggi": 0.8388,
+      "fMeasureByLabel_tinggi": 0.8325,
+      "precisionByLabel_rendah": 0.8361,
+      "recallByLabel_rendah": 0.8233,
+      "fMeasureByLabel_rendah": 0.8297,
+      "auc": 0.8679
+    },
+    "Decision Tree": {
+      "accuracy": 0.8455,
+      "weightedPrecision": 0.8455,
+      "weightedRecall": 0.8455,
+      "f1": 0.8455,
+      "precisionByLabel_tinggi": 0.8441,
+      "recallByLabel_tinggi": 0.8478,
+      "fMeasureByLabel_tinggi": 0.846,
+      "precisionByLabel_rendah": 0.8469,
+      "recallByLabel_rendah": 0.8433,
+      "fMeasureByLabel_rendah": 0.8451,
+      "auc": 0.8722
+    },
+    "Random Forest": {
+      "accuracy": 0.9024,
+      "weightedPrecision": 0.9032,
+      "weightedRecall": 0.9024,
+      "f1": 0.9023,
+      "precisionByLabel_tinggi": 0.8855,
+      "recallByLabel_tinggi": 0.9243,
+      "fMeasureByLabel_tinggi": 0.9045,
+      "precisionByLabel_rendah": 0.9208,
+      "recallByLabel_rendah": 0.8804,
+      "fMeasureByLabel_rendah": 0.9001,
+      "auc": 0.9674
+    },
+    "GBT": {
+      "accuracy": 0.8881,
+      "weightedPrecision": 0.8881,
+      "weightedRecall": 0.8881,
+      "f1": 0.8881,
+      "precisionByLabel_tinggi": 0.886,
+      "recallByLabel_tinggi": 0.891,
+      "fMeasureByLabel_tinggi": 0.8885,
+      "precisionByLabel_rendah": 0.8903,
+      "recallByLabel_rendah": 0.8852,
+      "fMeasureByLabel_rendah": 0.8877,
+      "auc": 0.957
+    }
+  }
+}

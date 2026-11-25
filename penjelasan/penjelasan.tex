@@ -1,0 +1,460 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{times}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\setlist{itemsep=1pt,topsep=3pt}
+% Nama file dan kueri berhuruf mesin ketik tidak bisa dipenggal; biarkan spasi melebar daripada meluber.
+\sloppy
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titleformat{\subsection}{\normalfont\large\bfseries}{}{0em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\f}[1]{\texttt{#1}}
+\newcommand{\tanya}[2]{\item \textit{``#1''}\\ #2}
+\input{../output/latex/angka.tex}
+
+\begin{document}
+
+{\LARGE\bfseries Materi Presentasi Kelompok 1\par}
+\vspace{2pt}
+{\large Klasifikasi Nilai Transaksi E-Commerce Olist dengan HDFS, Spark, dan MLlib\par}
+\vspace{4pt}
+Anggota 1: Mohammad Ariffansyah (24051204099) \quad Anggota 2: [Nama] \quad
+Anggota 3: [Nama] \quad Anggota 4: [Nama]
+
+\section{Pembagian tugas dan urutan presentasi}
+Urutan pembicara mengikuti nomor slide (\f{slides/presentasi.html}), jadi tidak ada
+lompat-lompat. Daftar apa yang dijelaskan di setiap slide ada di Bagian~\ref{sec:naskah}.
+
+\begin{tabularx}{\textwidth}{P{2.1cm}P{1.9cm}YP{4.6cm}}
+\toprule
+Siapa & Slide & Bagian & Demo langsung \\
+\midrule
+Anggota 1 & 1--6 & Pembuka, pertanyaan, alasan klasifikasi, dataset, arsitektur, HDFS & \f{./run.sh hdfs}, HDFS UI \f{localhost:9870} \\
+Anggota 2 & 7--8 & Big data dan Spark ETL & \f{./run.sh etl}, Spark UI \f{localhost:4040} selama job berjalan \\
+Anggota 3 & 9--10 & Analisis Spark SQL & --- \\
+Anggota 4 & 11--14 & Machine learning: setup, hasil, aturan pohon, skala data & grafik di slide \\
+Anggota 3 & 15 & MongoDB dan aplikasi demo & aplikasi \f{localhost:3000} \\
+Anggota 1 & 16 & Kesimpulan, lalu tanya jawab & --- \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Persiapan sebelum presentasi} (tahap \f{ml} sekitar 8 menit, jangan dijalankan saat presentasi):
+\begin{enumerate}
+\item \f{./run.sh up}, lalu \f{./run.sh hdfs}, \f{./run.sh etl}, dan \f{./run.sh ml}.
+\item Di terminal lain: \f{./run.sh app}, lalu buka \f{http://localhost:3000}.
+\item Buka tab: HDFS UI (\f{localhost:9870} $\rightarrow$ Utilities $\rightarrow$ Browse $\rightarrow$
+  \f{/olist}), aplikasi demo, folder \f{output/}, dan \f{artikel/artikel.pdf}.
+\end{enumerate}
+
+%=====================================================================
+\section{Di mana bagian big data-nya}
+Jawaban singkat: dari sisi \textbf{ukuran}, data ini belum termasuk big data. Yang
+``big data'' adalah \textbf{cara data disimpan dan diolah}: terdistribusi, paralel, dan
+bisa diperbesar tanpa mengubah kode.
+
+\subsection{Teknologinya}
+\begin{tabularx}{\textwidth}{P{2.3cm}YY}
+\toprule
+Alat & Peran big data & Wujudnya di proyek \\
+\midrule
+HDFS & Berkas dipecah menjadi blok dan disebar ke datanode. Kapasitas ditambah dengan
+menambah node, bukan membeli disk yang lebih besar. &
+9 CSV (\rawSizeMB{}~MB) di \f{/olist/raw}; hasil olahan Parquet di \f{/olist/curated};
+model dan prediksi di \f{/olist/models} dan \f{/olist/predictions}. \\
+Apache Spark & Data dibagi menjadi partisi yang diproses paralel dan di memori. Kode yang
+sama jalan di laptop maupun di kluster ratusan node. &
+Join 9 tabel, cleaning, dan agregasi dikerjakan 12 \emph{thread} sekaligus. \\
+Spark MLlib & Model dilatih langsung di atas data terdistribusi, tanpa memuat semuanya
+ke satu mesin. &
+Cross-validation 27 kombinasi, Random Forest, dan GBT. \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Bukti angka untuk presentasi} (Spark UI, tab Executors, saat tahap MLlib): Spark
+menjalankan \textbf{41.205 task}, membaca total \textbf{20,6~GiB} data, dan memindahkan
+\textbf{3,8~GiB} data antar-partisi (\emph{shuffle}). Volumenya sebesar itu karena data
+diproses berulang kali: 27 kombinasi $\times$ 3 fold, ditambah lima model.
+
+\subsection{Karakteristik datanya (5V)}
+\begin{tabularx}{\textwidth}{P{2.1cm}Y}
+\toprule
+V & Kondisi di proyek \\
+\midrule
+Volume & \rawRows{} baris mentah; tabel geolokasi saja \rowsGeolocation{} baris. Kecil
+untuk ukuran industri, dan sudah ditulis jujur sebagai keterbatasan. \\
+Variety & 9 tabel berbeda: transaksi, teks ulasan, koordinat GPS, tanggal, kategori produk. \\
+Veracity & Data kotor yang sudah ditangani: \cleanGeoDup{} baris duplikat, koordinat di
+luar Brasil, ulasan ganda, nilai kosong. \\
+Value & Wawasan bisnis (pesanan terlambat mendapat ulasan \lateReview{} vs
+\onTimeReview{}) dan model dengan F1 \rfFone. \\
+Velocity & Tidak ada: prosesnya \emph{batch}, bukan \emph{streaming}. Bisa disebut sebagai
+pengembangan berikutnya. \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Kalau dosen bertanya ``ini big data atau bukan?''}: datanya berukuran menengah,
+tetapi seluruh alurnya dirancang supaya bisa diperbesar. Eksperimen skala sudah menguji
+data latih sampai \scaleRowsMax{} baris, dan waktunya naik lebih lambat daripada jumlah
+data. Untuk data 100 kali lebih besar cukup menambah datanode dan executor; kodenya tidak
+berubah.
+
+%=====================================================================
+\section{Fungsi Spark SQL}
+Spark SQL adalah \textbf{mesin kueri terdistribusi}. Kita menulis SQL biasa, lalu Spark
+(lewat \emph{optimizer} Catalyst) mengubahnya menjadi job paralel di atas data di HDFS.
+Bedanya dengan MySQL: data tidak harus muat di satu server, dan kueri dikerjakan banyak
+core atau node sekaligus.
+\begin{itemize}
+\item \textbf{Analisis} (ketentuan minimal 3, kita membuat 6): tabel Parquet dibaca dari
+  HDFS, didaftarkan sebagai \emph{view} \f{orders} dan \f{items}, lalu dikueri. Isinya
+  tren bulanan, kategori teratas, keterlambatan per negara bagian, keterlambatan vs
+  ulasan, metode pembayaran, dan jumlah pesanan per pelanggan.
+\item \textbf{Fungsi SQL yang dipakai}:
+  \begin{itemize}
+  \item \f{GROUP BY} dengan \f{COUNT}, \f{SUM}, dan \f{AVG} untuk agregasi.
+  \item \f{JOIN} untuk menggabungkan item dengan pesanan.
+  \item \f{HAVING COUNT(*) >= 500} untuk membuang kelompok yang terlalu kecil.
+  \item \emph{Window function} \f{SUM(COUNT(*)) OVER ()} untuk menghitung persentase.
+  \item \f{date\_format} untuk mengelompokkan per bulan.
+  \item \f{ORDER BY ... LIMIT} untuk mengambil 10 teratas.
+  \end{itemize}
+\item \textbf{Di tahap ETL} dipakai DataFrame API (\f{join}, \f{groupBy}, \f{filter},
+  dan \emph{window} \f{row\_number} untuk memilih ulasan terakhir). Mesinnya sama dengan
+  Spark SQL, hanya ditulis dengan Python.
+\end{itemize}
+
+%=====================================================================
+\section{Fungsi MongoDB dan aplikasi demo}
+HDFS cocok untuk menyimpan \textbf{berkas besar yang dibaca sekaligus} oleh Spark, tetapi
+lambat kalau aplikasi hanya perlu satu data, misalnya ``prediksi untuk pesanan X''. MongoDB,
+basis data NoSQL berbasis dokumen JSON, mengisi peran itu: \textbf{menyajikan hasil} supaya
+bisa dibaca aplikasi dengan cepat tanpa menjalankan Spark.
+\begin{itemize}
+\item \f{olist.predictions}: \nUji{} dokumen hasil prediksi \bestModel{} untuk data uji,
+  dengan format seperti contoh di panduan (\f{id\_transaksi}, \f{kategori\_prediksi},
+  \f{kategori\_aktual}, \f{prob\_tinggi}, \f{model}, \f{sumber}).
+\item \f{olist.metrics}: satu dokumen ringkasan metrik ditambahkan setiap kali model
+  dilatih, sehingga riwayat semua percobaan tersimpan.
+\item \textbf{Tulis}: Spark menulis langsung lewat MongoDB Spark Connector 10.4.1, yang
+  versinya cocok dengan Spark 3.5 dan Scala 2.12.
+\item \textbf{Baca}: Spark membaca kembali di akhir job; \f{./run.sh mongo} menjalankan
+  \f{mongosh}; aplikasi demo membaca dengan driver MongoDB untuk Node.js.
+\item Di panduan MongoDB adalah komponen \textbf{opsional (nilai tambah)}, bukan pengganti
+  HDFS. HDFS untuk data mentah dan olahan; MongoDB untuk hasil akhir yang siap dipakai
+  aplikasi.
+\end{itemize}
+
+\subsection{Aplikasi demo (\f{app-demo/}, Next.js)}
+Jalankan dengan \f{./run.sh app}, buka \f{http://localhost:3000}. Setiap panel
+menampilkan kueri yang dijalankan di sebelah hasilnya.
+
+\begin{tabularx}{\textwidth}{P{3.2cm}P{4.4cm}Y}
+\toprule
+Bagian & Kueri & Yang ditunjukkan \\
+\midrule
+Cek transaksi & \f{findOne}, \f{\$sample} & Cari satu pesanan:
+prediksi, kategori aktual, probabilitas, dan dokumen aslinya. Klik contoh ID acak. \\
+Aktual vs prediksi & \f{aggregate(\$group)} & Confusion matrix dan akurasi
+(\rfAcc), dihitung MongoDB dari semua dokumen. \\
+Seberapa yakin model & \f{aggregate(\$bucket)} & Jumlah pesanan per rentang
+probabilitas: sebagian besar dekat 0 atau 1, artinya model yakin. \\
+Riwayat pelatihan & \f{find().\allowbreak sort().\allowbreak limit()} & Setiap kali \f{./run.sh ml}
+dijalankan, satu dokumen metrik bertambah. \\
+Hasil Spark SQL & SQL dari \f{etl\_analysis.py} & Keenam kueri Spark SQL dan tabel
+hasilnya (\f{output/*.csv}). \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Alur demo yang disarankan}: klik satu contoh ID, lalu jelaskan bahwa data ini
+ditulis Spark dan dibaca aplikasi tanpa Spark. Turun ke confusion matrix dan tunjukkan
+bahwa akurasinya sama dengan di artikel. Terakhir, tunjukkan satu kueri Spark SQL beserta
+hasilnya.
+
+%=====================================================================
+\section{Yang harus dipelajari setiap anggota}
+
+\subsection{Anggota 1: pembuka, dataset, lingkungan, HDFS, kesimpulan}
+\textbf{Baca:} artikel Bab 1, Subbab 2.1, 2.2, 3.7, Bab 4; file \f{compose.yaml},
+\f{hadoop.env}, \f{run.sh}.
+\begin{itemize}
+\item Namenode vs datanode, blok, replikasi, \emph{safe mode}. \f{dfs.replication=1}
+  karena hanya ada satu datanode.
+\item Mode \f{local[*]}: Spark memakai 12 \emph{thread} dalam satu container, tetapi tetap
+  membaca dan menulis lewat \f{hdfs://namenode:8020}.
+\item Lisensi dataset CC BY-NC-SA 4.0 dan alasan memilih Olist: 9 tabel yang harus
+  digabung.
+\item Label Pembelian Tinggi/Rendah dan alasan memilih klasifikasi (\oneTimePct\% pelanggan
+  hanya belanja sekali), karena ini dijelaskan di slide 2--3.
+\end{itemize}
+\textbf{Pertanyaan yang mungkin muncul:}
+\begin{itemize}
+\tanya{Kenapa pakai HDFS kalau cuma satu laptop?}{Arsitekturnya sama dengan kluster;
+  tinggal menambah datanode. Spark membaca lewat alamat HDFS, bukan file lokal.}
+\tanya{Kenapa pakai container?}{Supaya siapa pun bisa menjalankan ulang dengan satu
+  perintah dan mendapat hasil yang sama.}
+\end{itemize}
+
+\subsection{Anggota 2: big data dan Spark ETL}
+\textbf{Baca:} artikel Subbab 2.3 dan 3.2; Bagian 2 dokumen ini; \f{jobs/etl\_analysis.py} bagian 1--3.
+\begin{itemize}
+\item Opsi \f{inferSchema}, \f{multiLine}, \f{escape}: komentar ulasan berisi baris
+  baru, jadi tanpa opsi ini satu ulasan pecah menjadi beberapa baris.
+\item Tabel kualitas data: sel kosong, \cleanGeoDup{} baris geolokasi duplikat, dan 814
+  \f{review\_id} ganda. Setiap aturan cleaning beserta alasannya.
+\item Join 9 tabel menjadi \nOrders{} pesanan (\curatedColumns{} kolom), rumus Haversine,
+  rasio ongkir, dan alasan menyimpan dalam format Parquet.
+\item Dasar Spark: transformasi vs aksi, \emph{lazy evaluation}, \f{cache()}.
+\end{itemize}
+\textbf{Pertanyaan yang mungkin muncul:}
+\begin{itemize}
+\tanya{Kenapa nilai kosong diisi di MLlib, bukan di ETL?}{Supaya median dihitung dari data
+  latih saja dan tidak bocor dari data uji.}
+\tanya{Kenapa kategori produk diambil dari item pertama?}{Kalau diambil dari item termahal,
+  harga ikut menentukan fitur, padahal harga adalah pembentuk label.}
+\end{itemize}
+
+\subsection{Anggota 3: Spark SQL dan MongoDB}
+\textbf{Baca:} artikel Subbab 3.3; Bagian 3 dan 4 dokumen ini; \f{etl\_analysis.py}
+bagian 4; \f{app-demo/app/page.js}.
+\begin{itemize}
+\item Keenam kueri Spark SQL dan fungsi SQL-nya (Bagian 3).
+\item Temuan utama:
+  \begin{itemize}
+  \item Puncak penjualan \peakMonth{} (Black Friday).
+  \item Pesanan terlambat mendapat ulasan \lateReview{} vs \onTimeReview.
+  \item \cardShare\% pesanan dibayar dengan kartu kredit.
+  \item \oneTimePct\% pelanggan hanya berbelanja sekali, yang menjadi alasan memilih
+    klasifikasi, bukan clustering.
+  \end{itemize}
+\item MongoDB:
+  \begin{itemize}
+  \item Isi kedua koleksi.
+  \item Mode \f{overwrite} (prediksi) vs \f{append} (metrik).
+  \item Operasi \f{findOne}, \f{aggregate} dengan \f{\$group}/\f{\$bucket}/\f{\$sample},
+    serta \f{find().sort()}.
+  \end{itemize}
+\item Menjalankan aplikasi demo dan menjelaskan setiap panelnya.
+\end{itemize}
+\textbf{Pertanyaan yang mungkin muncul:}
+\begin{itemize}
+\tanya{Kenapa perlu MongoDB kalau sudah ada HDFS?}{HDFS untuk berkas besar yang dibaca Spark
+  sekaligus; MongoDB untuk mencari satu data dengan cepat dari aplikasi.}
+\tanya{Kenapa ada filter minimal 500 pesanan?}{Supaya persentase keterlambatan tidak
+  dihitung dari sedikit data.}
+\tanya{Apa bedanya Spark SQL dengan MySQL?}{Spark SQL memecah kueri menjadi job paralel di
+  atas data terdistribusi; MySQL berjalan di satu server.}
+\end{itemize}
+
+\subsection{Anggota 4: machine learning dan skala data (bagian terberat, mulai paling awal)}
+\textbf{Baca:} artikel Subbab 2.4, 2.5, 3.4, 3.5, 3.6; \f{jobs/train\_models.py};
+\f{output/ml\_decision\_tree\_shallow.txt}.
+\begin{itemize}
+\item Label: total harga $\geq$ median (\ambang{}~BRL), sehingga kelas seimbang. Harga dan
+  kolom yang baru diketahui setelah pesanan selesai dikeluarkan dari fitur (kebocoran
+  label).
+\item Pipeline: \f{StringIndexer} (\f{keep}), \f{Imputer}, \f{VectorAssembler},
+  \f{maxBins=128} (karena ada 74 kategori).
+\item Pembagian data latih/uji berbasis hash (\nLatih{} / \nUji{}), supaya hasil bisa
+  diulang persis.
+\item Cross-validation 27 kombinasi menghasilkan kedalaman \dtDepth. F1 latih
+  \dtTrainFone{} vs uji \dtFone: ada \emph{overfitting}, tetapi membatasi pohon tidak
+  memperbaiki hasil pada data baru.
+\item Perbandingan model:
+  \begin{itemize}
+  \item Random Forest: F1 \rfFone, AUC \rfAuc.
+  \item GBT: F1 \gbtFone.
+  \item Decision Tree: F1 \dtFone.
+  \item Decision Tree dangkal: F1 \dtdFone.
+  \end{itemize}
+  Random Forest sekitar \rfTimesSlower{} kali lebih lama dilatih, dan aturannya tidak bisa
+  dibaca.
+\item Definisi akurasi, presisi, recall, F1, dan AUC. Confusion matrix: \cmTT{} dan
+  \cmRR{} benar; \cmTR{} dan \cmRT{} salah.
+\item Cara membaca aturan pohon dangkal: berat sekitar 1,2~kg, ongkir, dan jumlah cicilan.
+\item Eksperimen skala: \scaleTimeMin{} detik (10\%) $\rightarrow$ \scaleTimeFull{} detik
+  (100\%) $\rightarrow$ \scaleTimeMax{} detik (4 kali data). Naik lebih lambat dari jumlah
+  data karena ada biaya tetap dan proses paralel.
+\end{itemize}
+\textbf{Pertanyaan yang mungkin muncul:}
+\begin{itemize}
+\tanya{Harga kan sudah diketahui saat bayar, lalu gunanya apa?}{Untuk menjelaskan ciri
+  transaksi bernilai tinggi, misalnya untuk menentukan promo ongkir atau program cicilan,
+  bukan untuk meramal.}
+\tanya{Kenapa Random Forest lebih bagus?}{Rata-rata dari banyak pohon yang dilatih pada
+  sampel berbeda mengurangi variansi satu pohon, dan probabilitasnya lebih halus, sehingga
+  AUC naik paling banyak.}
+\tanya{Kenapa Random Forest dan GBT tidak di-tuning?}{Satu kali latih Random Forest sekitar
+  \rfFit{} detik, jadi cross-validation penuh menambah sekitar 25 menit. Perbandingannya
+  jadi menguntungkan Decision Tree.}
+\tanya{Kenapa F1 untuk data 2 dan 4 kali tidak dilaporkan?}{Data latih hanya diduplikasi,
+  tidak ada informasi baru, jadi yang diukur hanya waktunya.}
+\end{itemize}
+
+%=====================================================================
+\section{Naskah per slide}\label{sec:naskah}
+Setiap slide berisi: siapa yang membawakan, apa yang \textbf{dijelaskan} (poin yang
+diucapkan), dan apa yang \textbf{harus dipahami} supaya bisa menjawab pertanyaan. Target
+waktu sekitar 45--60 detik per slide.
+
+\newcommand{\slidenote}[4]{%
+  \par\noindent\textbf{Slide #1 · #2} \hfill \textit{#3}\par
+  \vspace{1pt}#4\par\vspace{6pt}}
+\newcommand{\jelas}{\textbf{Dijelaskan:}}
+\newcommand{\paham}{\textbf{Harus dipahami:}}
+
+\slidenote{1}{Judul}{Anggota 1}{
+\jelas{} perkenalan kelompok dan topik dalam satu kalimat: ``Kami mengklasifikasikan
+pesanan Olist menjadi Pembelian Tinggi atau Rendah dengan HDFS, Spark, MLlib, dan MongoDB.''\\
+\paham{} urutan rute data di label: Kaggle $\rightarrow$ HDFS $\rightarrow$ Spark
+$\rightarrow$ MLlib $\rightarrow$ MongoDB.}
+
+\slidenote{2}{Pertanyaan penelitian}{Anggota 1}{
+\jelas{} label dibuat dari median total harga (\ambang{}~BRL), sehingga kelasnya seimbang
+(\nTinggi{} vs \nRendah); model harus menebak \emph{tanpa} melihat harga.\\
+\paham{} kenapa median (kelas seimbang, jadi akurasi tidak bisa ``curang'' dengan menebak
+satu kelas) dan apa itu kebocoran label. Kalau ditanya ``harga kan sudah diketahui?'':
+tujuannya menjelaskan ciri transaksi bernilai tinggi, bukan meramal.}
+
+\slidenote{3}{Kenapa klasifikasi, bukan clustering}{Anggota 1}{
+\jelas{} \oneTimePct\% pelanggan hanya belanja sekali, jadi pola pembelian per pelanggan
+sangat tipis; topik Kelompok~1 memberi dua pilihan dan kami memilih klasifikasi transaksi.\\
+\paham{} angka ini hasil analisis Spark SQL A6. Penelitian lain (Zeinali dkk.) tetap
+membuat segmentasi RFM, tetapi pada data ini frekuensi hampir selalu 1.}
+
+\slidenote{4}{Dataset}{Anggota 1}{
+\jelas{} 9 tabel, \rawRows{} baris, \rawSizeMB{}~MB, Brasil 2016--2018; tabel terbesar
+adalah geolokasi; lisensi CC BY-NC-SA 4.0.\\
+\paham{} isi singkat setiap tabel (pesanan, item, pembayaran, ulasan, pelanggan, penjual,
+produk, geolokasi, terjemahan kategori) dan kenapa banyak tabel membuat Spark perlu: semua
+harus digabung per pesanan.}
+
+\slidenote{5}{Arsitektur}{Anggota 1}{
+\jelas{} alur dua baris di slide, empat container Podman, satu perintah \f{./run.sh},
+dan hasil yang sama setiap dijalankan ulang.\\
+\paham{} peran tiap kotak: HDFS untuk menyimpan, Spark untuk mengolah, MLlib untuk melatih
+model, MongoDB untuk menyajikan hasil, Next.js untuk menampilkan. Parquet adalah format
+kolom yang menyimpan tipe data.}
+
+\slidenote{6}{HDFS}{Anggota 1 · demo HDFS UI}{
+\jelas{} tiga perintah HDFS (\f{mkdir}, \f{put}, \f{du}) dan buktinya di HDFS UI; 9 berkas,
+\rawSizeMB{}~MB, replikasi 1.\\
+\paham{} namenode menyimpan metadata, datanode menyimpan blok; replikasi 1 karena hanya ada
+satu datanode; \emph{safe mode} saat namenode baru menyala.}
+
+\slidenote{7}{Di mana big data-nya}{Anggota 2}{
+\jelas{} yang ``big data'' adalah cara mengolahnya: HDFS, Spark, MLlib; bukti dari Spark UI
+(41.205 task, 20,6~GiB dibaca, 3,8~GiB \emph{shuffle}, 12 core).\\
+\paham{} arti partisi, task, dan \emph{shuffle}; tabel 5V di Bagian~2; jawaban jujur untuk
+``ini big data atau bukan?''.}
+
+\slidenote{8}{Spark ETL}{Anggota 2 · demo \f{./run.sh etl}}{
+\jelas{} masalah data yang dibuang atau dirapikan (duplikat geolokasi, pesanan batal, ulasan
+ganda, koordinat di luar Brasil) sampai menjadi \nOrders{} pesanan, \curatedColumns{} kolom.\\
+\paham{} opsi \f{multiLine}/\f{escape}, Haversine, rasio ongkir, \emph{lazy evaluation},
+dan kenapa nilai kosong diisi di MLlib, bukan di ETL.}
+
+\slidenote{9}{Keterlambatan dan ulasan}{Anggota 3}{
+\jelas{} ulasan rata-rata \onTimeReview{} (tepat waktu) vs \lateReview{} (terlambat); ulasan
+buruk naik dari \onTimeLow\% ke \lateLow\%; keterlambatan tertinggi di \lateWorstState.\\
+\paham{} kueri \f{GROUP BY} + \f{AVG}, alasan filter \f{HAVING COUNT(*) >= 500}, dan
+\emph{window function} untuk persentase.}
+
+\slidenote{10}{Tren penjualan dan cara bayar}{Anggota 3}{
+\jelas{} pendapatan naik sepanjang 2017 dengan puncak \peakMonth{} (Black Friday); \cardShare\%
+pesanan memakai kartu kredit dengan rata-rata \cardInstallments{} kali cicilan.\\
+\paham{} \f{date\_format} untuk per bulan; kenapa bulan dengan kurang dari 100 pesanan tidak
+digambar (terlihat seperti penjualan anjlok padahal datanya belum lengkap).}
+
+\slidenote{11}{Setup machine learning}{Anggota 4}{
+\jelas{} label, 22 fitur numerik + 4 kategorikal, kolom yang sengaja dibuang, dan pipeline
+StringIndexer $\rightarrow$ Imputer $\rightarrow$ VectorAssembler $\rightarrow$ model.\\
+\paham{} fungsi tiap tahap pipeline, \f{maxBins=128}, pembagian data berbasis hash
+(\nLatih{} latih / \nUji{} uji), dan 3-fold cross-validation 27 kombinasi.}
+
+\slidenote{12}{Hasil model}{Anggota 4}{
+\jelas{} Random Forest terbaik (F1 \rfFone, AUC \rfAuc), lalu GBT \gbtFone{} dan Decision
+Tree \dtFone; fitur rasio menambah \gainFeatures{} poin; Random Forest \rfTimesSlower{} kali
+lebih lama dilatih.\\
+\paham{} definisi akurasi, presisi, recall, F1, AUC; kenapa Random Forest lebih baik;
+\emph{overfitting} Decision Tree (latih \dtTrainFone{} vs uji \dtFone); kenapa RF/GBT tidak
+di-tuning.}
+
+\slidenote{13}{Aturan pohon dangkal}{Anggota 4}{
+\jelas{} baca tiga aturan (berat $\pm$1,2~kg, ongkir, cicilan, kategori); F1 hanya \dtdFone{}
+tetapi aturannya bisa dijelaskan ke tim bisnis.\\
+\paham{} cara membaca pohon dari atas ke bawah; \emph{trade-off} akurasi vs kemudahan
+dijelaskan; kenapa pohon kecil tidak \emph{overfitting} (latih \dtdTrainFone).}
+
+\slidenote{14}{Eksperimen skala data}{Anggota 4}{
+\jelas{} data 40 kali lebih banyak hanya butuh waktu sekitar 4,5 kali (\scaleTimeMin{}
+$\rightarrow$ \scaleTimeMax{} detik); F1 terus naik dari \scaleFoneMin{} ke \scaleFoneFull.\\
+\paham{} kenapa kenaikan waktu lebih lambat dari data (biaya tetap, paralel) dan kenapa skala
+2 dan 4 kali hanya mengukur waktu (data diduplikasi).}
+
+\slidenote{15}{MongoDB dan aplikasi}{Anggota 3 · demo \f{localhost:3000}}{
+\jelas{} prediksi Random Forest disimpan di \f{olist.predictions} (\nUji{} dokumen) dan dibaca
+aplikasi tanpa Spark. Demo: cari satu ID, lalu confusion matrix (akurasi \rfAcc), lalu satu
+kueri Spark SQL.\\
+\paham{} beda HDFS dan MongoDB; operasi \f{findOne}, \f{aggregate}
+(\f{\$group}, \f{\$bucket}, \f{\$sample}); konektor 10.4.1; mode \f{overwrite} vs \f{append}.}
+
+\slidenote{16}{Kesimpulan}{Anggota 1}{
+\jelas{} tiga poin: pipeline bisa diulang dengan satu perintah; Random Forest F1 \rfFone{}
+dan Decision Tree \dtFone; keterbatasan (satu laptop, satu datanode, RF dan GBT belum
+di-tuning). Lalu buka sesi tanya jawab.\\
+\paham{} semua angka di tabel ``Angka penting'' dan rencana pengembangan: kluster beberapa
+node, tuning RF/GBT, prediksi keterlambatan pengiriman.}
+
+%=====================================================================
+\section{Wajib dikuasai semua anggota}
+\begin{itemize}
+\item Menjelaskan alur lengkap dalam satu menit: Kaggle $\rightarrow$ HDFS $\rightarrow$
+  Spark ETL $\rightarrow$ Spark SQL $\rightarrow$ MLlib $\rightarrow$ MongoDB $\rightarrow$
+  aplikasi.
+\item Alasan memilih klasifikasi transaksi dan cara label dibuat.
+\item Masalah yang ditemui dan solusinya (tabel di bawah); dosen suka menanyakan ini.
+\item Mencoba \f{./run.sh} dan \f{./run.sh app} sendiri minimal sekali.
+\end{itemize}
+
+\begin{tabularx}{\textwidth}{P{5.2cm}Y}
+\toprule
+Masalah & Solusi \\
+\midrule
+Skrip menunggu selamanya saat cek datanode & \f{grep -q} memutus pipe lebih awal, podman
+keluar dengan SIGPIPE, dan \f{pipefail} menganggapnya gagal. Diganti \f{grep >/dev/null}. \\
+Hasil berubah setiap ETL dijalankan ulang & Pembagian data berbasis hash, lalu data
+dipartisi dan diurutkan per \f{order\_id}. \\
+Random Forest kehabisan memori & 12 \emph{thread} $\times$ 256~MB memori statistik
+memenuhi \emph{heap}; \f{maxMemoryInMB} diturunkan ke 64. \\
+Kedalaman terbaik berada di batas grid & Grid diperluas sampai 25, sehingga terlihat F1
+sudah mendatar. \\
+Kebocoran label & Harga, nilai pembayaran, ulasan, dan keterlambatan tidak dipakai sebagai
+fitur. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Angka penting}
+\begin{tabularx}{\textwidth}{YY}
+\toprule
+Data & Model \\
+\midrule
+\rawRows{} baris mentah, 9 tabel, \rawSizeMB{}~MB & Random Forest: F1 \rfFone, AUC \rfAuc \\
+\nOrders{} pesanan bersih, \curatedColumns{} kolom & Decision Tree: F1 \dtFone{} (kedalaman \dtDepth) \\
+Ambang label \ambang{}~BRL (median) & GBT F1 \gbtFone; pohon dangkal F1 \dtdFone \\
+\latePct\% pesanan terlambat; ulasan \lateReview{} vs \onTimeReview & Fitur rasio: +\gainFeatures{} poin F1 \\
+\oneTimePct\% pelanggan hanya belanja sekali & Latih RF \rfFit{} dtk vs DT \dtFit{} dtk \\
+\bottomrule
+\end{tabularx}
+
+\end{document}

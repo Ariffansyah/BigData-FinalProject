@@ -1,0 +1,42 @@
+services:
+  namenode:
+    image: docker.io/apache/hadoop:3.4.3
+    hostname: namenode
+    command: ["hdfs", "namenode"]
+    ports: ["9870:9870"]
+    env_file: hadoop.env
+    environment:
+      ENSURE_NAMENODE_DIR: /tmp/hadoop-hadoop/dfs/name
+    volumes:
+      - ./data:/data:ro
+
+  datanode:
+    image: docker.io/apache/hadoop:3.4.3
+    hostname: datanode
+    command: ["hdfs", "datanode"]
+    env_file: hadoop.env
+    depends_on: [namenode]
+
+  spark:
+    build: spark
+    image: localhost/olist-spark:3.5.6
+    command: ["sleep", "infinity"]
+    environment:
+      # print() langsung tampil saat job berjalan, tidak menunggu buffer penuh.
+      PYTHONUNBUFFERED: "1"
+    ports: ["4040:4040"]
+    working_dir: /project
+    volumes:
+      - .:/project
+      - ivy:/ivy
+    depends_on: [namenode, datanode, mongo]
+
+  mongo:
+    image: docker.io/library/mongo:8
+    ports: ["27017:27017"]
+    volumes:
+      - mongo:/data/db
+
+volumes:
+  ivy:
+  mongo:

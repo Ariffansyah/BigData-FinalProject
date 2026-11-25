@@ -1,0 +1,12 @@
+\begin{tabular}{lrrr}
+\toprule
+Langkah & Sebelum & Sesudah & Dibuang \\
+\midrule
+orders: buang status canceled/unavailable & 99.441 & 98.207 & 1.234 \\
+orders: tanggal terima < tanggal beli (dikosongkan) & 0 & 0 & 0 \\
+reviews: 1 review terakhir per pesanan & 99.224 & 98.673 & 551 \\
+payments: buang payment\_type not\_defined & 103.886 & 103.883 & 3 \\
+geolocation: buang baris duplikat & 1.000.163 & 738.332 & 261.831 \\
+geolocation: buang koordinat di luar Brasil & 738.332 & 738.299 & 33 \\
+\bottomrule
+\end{tabular}

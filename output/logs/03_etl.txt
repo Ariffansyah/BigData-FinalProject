@@ -1,0 +1,154 @@
+$ podman compose exec -T spark /opt/spark/bin/spark-submit --master local[*] --driver-memory 4g --conf spark.log.level=ERROR jobs/etl_analysis.py
+#### 1. Membaca dataset mentah dari HDFS dan memeriksa kualitas data
+
+=== customers: 99,441 baris, 5 kolom ===
+root
+ |-- customer_id: string (nullable = true)
+ |-- customer_unique_id: string (nullable = true)
+ |-- customer_zip_code_prefix: integer (nullable = true)
+ |-- customer_city: string (nullable = true)
+ |-- customer_state: string (nullable = true)
+
+
+=== geolocation: 1,000,163 baris, 5 kolom ===
+root
+ |-- geolocation_zip_code_prefix: integer (nullable = true)
+ |-- geolocation_lat: double (nullable = true)
+ |-- geolocation_lng: double (nullable = true)
+ |-- geolocation_city: string (nullable = true)
+ |-- geolocation_state: string (nullable = true)
+
+
+=== order_items: 112,650 baris, 7 kolom ===
+root
+ |-- order_id: string (nullable = true)
+ |-- order_item_id: integer (nullable = true)
+ |-- product_id: string (nullable = true)
+ |-- seller_id: string (nullable = true)
+ |-- shipping_limit_date: timestamp (nullable = true)
+ |-- price: double (nullable = true)
+ |-- freight_value: double (nullable = true)
+
+
+=== payments: 103,886 baris, 5 kolom ===
+root
+ |-- order_id: string (nullable = true)
+ |-- payment_sequential: integer (nullable = true)
+ |-- payment_type: string (nullable = true)
+ |-- payment_installments: integer (nullable = true)
+ |-- payment_value: double (nullable = true)
+
+
+=== reviews: 99,224 baris, 7 kolom ===
+root
+ |-- review_id: string (nullable = true)
+ |-- order_id: string (nullable = true)
+ |-- review_score: integer (nullable = true)
+ |-- review_comment_title: string (nullable = true)
+ |-- review_comment_message: string (nullable = true)
+ |-- review_creation_date: timestamp (nullable = true)
+ |-- review_answer_timestamp: timestamp (nullable = true)
+
+
+=== orders: 99,441 baris, 8 kolom ===
+root
+ |-- order_id: string (nullable = true)
+ |-- customer_id: string (nullable = true)
+ |-- order_status: string (nullable = true)
+ |-- order_purchase_timestamp: timestamp (nullable = true)
+ |-- order_approved_at: timestamp (nullable = true)
+ |-- order_delivered_carrier_date: timestamp (nullable = true)
+ |-- order_delivered_customer_date: timestamp (nullable = true)
+ |-- order_estimated_delivery_date: timestamp (nullable = true)
+
+
+=== products: 32,951 baris, 9 kolom ===
+root
+ |-- product_id: string (nullable = true)
+ |-- product_category_name: string (nullable = true)
+ |-- product_name_lenght: integer (nullable = true)
+ |-- product_description_lenght: integer (nullable = true)
+ |-- product_photos_qty: integer (nullable = true)
+ |-- product_weight_g: integer (nullable = true)
+ |-- product_length_cm: integer (nullable = true)
+ |-- product_height_cm: integer (nullable = true)
+ |-- product_width_cm: integer (nullable = true)
+
+
+=== sellers: 3,095 baris, 4 kolom ===
+root
+ |-- seller_id: string (nullable = true)
+ |-- seller_zip_code_prefix: integer (nullable = true)
+ |-- seller_city: string (nullable = true)
+ |-- seller_state: string (nullable = true)
+
+
+=== category_translation: 71 baris, 2 kolom ===
+root
+ |-- product_category_name: string (nullable = true)
+ |-- product_category_name_english: string (nullable = true)
+
+
+#### 2. Pembersihan data
+[clean] orders: buang status canceled/unavailable: 99,441 -> 98,207
+[clean] reviews: 1 review terakhir per pesanan: 99,224 -> 98,673
+[clean] payments: buang payment_type not_defined: 103,886 -> 103,883
+[clean] geolocation: buang baris duplikat: 1,000,163 -> 738,332
+[clean] geolocation: buang koordinat di luar Brasil: 738,332 -> 738,299
+
+#### 3. Menyimpan tabel per pesanan ke HDFS (Parquet)
+hdfs://namenode:8020/olist/curated/orders: 98,199 baris, 35 kolom
+
+#### 4. Analisis dengan Spark SQL
+
+A1 Tren bulanan (bulan, pesanan, pendapatan, rata-rata nilai):
+   ('2016-09', 2, 207.86, 103.93)
+   ('2016-10', 290, 44507.3, 153.47)
+   ('2016-12', 1, 10.9, 10.9)
+   ('2017-01', 787, 120098.27, 152.6)
+   ('2017-02', 1718, 244959.35, 142.58)
+   ('2017-03', 2617, 368341.32, 140.75)
+   ('2017-04', 2377, 353842.98, 148.86)
+   ('2017-05', 3640, 503159.19, 138.23)
+
+A2 10 kategori teratas (kategori, pesanan, pendapatan, harga item, review):
+   ('health_beauty', 8800, 1255695.13, 130.34, 4.15)
+   ('watches_gifts', 5604, 1198185.21, 200.7, 4.03)
+   ('bed_bath_table', 9399, 1035964.06, 93.36, 3.9)
+   ('sports_leisure', 7673, 979740.92, 114.06, 4.12)
+   ('computers_accessories', 6654, 904322.02, 116.22, 3.95)
+   ('furniture_decor', 6425, 727465.05, 87.67, 3.92)
+   ('housewares', 5847, 626825.8, 90.65, 4.07)
+   ('cool_stuff', 3616, 620770.49, 164.27, 4.16)
+
+A3 Keterlambatan per negara bagian (state, pesanan, hari kirim, jarak, % terlambat):
+   ('MA', 717, 21.5, 2102.0, 17.43)
+   ('CE', 1279, 21.2, 2186.0, 13.76)
+   ('BA', 3256, 19.3, 1344.0, 12.16)
+   ('RJ', 12350, 15.2, 489.0, 12.11)
+   ('PA', 946, 23.7, 2282.0, 11.21)
+   ('ES', 1995, 15.7, 802.0, 10.73)
+   ('PB', 517, 20.4, 2088.0, 10.44)
+   ('MS', 701, 15.5, 845.0, 9.7)
+
+A4 Keterlambatan vs review (status, pesanan, rata-rata review, % review 1-2):
+   ('Tepat waktu', 89443, 4.29, 9.27)
+   ('Terlambat', 6381, 2.27, 62.42)
+
+A5 Metode pembayaran (metode, pesanan, %, rata-rata bayar, cicilan):
+   ('credit_card', 75613, 77.0, 165.81, 3.51)
+   ('boleto', 19535, 19.89, 144.69, 1.0)
+   ('voucher', 1535, 1.56, 105.23, 1.0)
+   ('debit_card', 1515, 1.54, 140.28, 1.0)
+
+A6 Jumlah pesanan per pelanggan (pesanan, pelanggan, %):
+   (1, 92096, 96.96)
+   (2, 2651, 2.79)
+   (3, 188, 0.2)
+   (4, 29, 0.03)
+   (5, 9, 0.01)
+   (6, 5, 0.01)
+   (7, 3, 0.0)
+   (9, 1, 0.0)
+
+ETL + analisis selesai dalam 39.8 detik

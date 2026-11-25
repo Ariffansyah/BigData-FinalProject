@@ -1,0 +1,42 @@
+{
+ "01_compose_ps": [
+  "term_01_compose_ps.png"
+ ],
+ "02_hdfs": [
+  "term_02_hdfs.png"
+ ],
+ "03_etl_1": [
+  "term_03_etl_1.png"
+ ],
+ "03_etl_2": [
+  "term_03_etl_2.png"
+ ],
+ "03_etl_3": [
+  "term_03_etl_3.png"
+ ],
+ "03_etl_4": [
+  "term_03_etl_4.png"
+ ],
+ "04_ml_1": [
+  "term_04_ml_1.png"
+ ],
+ "04_ml_2": [
+  "term_04_ml_2.png"
+ ],
+ "04_ml_3": [
+  "term_04_ml_3.png"
+ ],
+ "04_ml_4": [
+  "term_04_ml_4.png"
+ ],
+ "04_ml_5": [
+  "term_04_ml_5.png"
+ ],
+ "05_hdfs_output": [
+  "term_05_hdfs_output.png"
+ ],
+ "06_mongo": [
+  "term_06_mongo_1.png",
+  "term_06_mongo_2.png"
+ ]
+}

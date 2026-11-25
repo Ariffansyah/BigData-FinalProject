@@ -1,0 +1,6 @@
+$ podman compose ps
+CONTAINER ID  IMAGE                          COMMAND         CREATED            STATUS            PORTS                     NAMES
+9b24396988e1  docker.io/apache/hadoop:3.4.3  hdfs namenode   About an hour ago  Up About an hour  0.0.0.0:9870->9870/tcp    finalproject_namenode_1
+1e22fa5357e2  docker.io/library/mongo:8      mongod          About an hour ago  Up About an hour  0.0.0.0:27017->27017/tcp  finalproject_mongo_1
+87b5449a7c8f  docker.io/apache/hadoop:3.4.3  hdfs datanode   About an hour ago  Up About an hour                            finalproject_datanode_1
+142486d8319b  localhost/olist-spark:3.5.6    sleep infinity  5 minutes ago      Up 5 minutes      0.0.0.0:4040->4040/tcp    finalproject_spark_1

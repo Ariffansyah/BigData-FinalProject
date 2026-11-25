@@ -1,0 +1,6 @@
+model,params,cv_f1,train_f1,test_accuracy,test_f1,test_auc,fit_seconds
+Decision Tree dangkal,maxDepth=4,0.7535,0.7536,0.7528,0.7525,0.7924,1.39
+Decision Tree (fitur dasar),"maxDepth=15, minInstancesPerNode=1",,0.921,0.8311,0.8311,0.8679,3.13
+Decision Tree,"maxDepth=15, minInstancesPerNode=1",0.8339,0.9304,0.8455,0.8455,0.8722,3.32
+Random Forest,"numTrees=50, maxDepth=20",,0.9978,0.9024,0.9023,0.9674,103.22
+GBT,"maxIter=100, maxDepth=6",,0.9139,0.8881,0.8881,0.957,61.9

@@ -1,0 +1,13 @@
+# run.sh downloads the dataset from Kaggle
+data/
+
+node_modules/
+.next/
+__pycache__/
+
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz

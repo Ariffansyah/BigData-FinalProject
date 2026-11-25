@@ -1,0 +1,11 @@
+\begin{tabular}{>{\raggedright}p{2.5cm}>{\raggedright\arraybackslash}p{4cm}rrrrrr}
+\toprule
+Model & Parameter & F1 CV & F1 latih & Akurasi & F1 uji & AUC & Latih (dtk) \\
+\midrule
+Decision Tree dangkal & maxDepth=4 & 0,7535 & 0,7536 & 0,7528 & 0,7525 & 0,7924 & 1,4 \\
+Decision Tree (fitur dasar) & maxDepth=15\newline minInstancesPerNode=1 & -- & 0,9210 & 0,8311 & 0,8311 & 0,8679 & 3,1 \\
+Decision Tree & maxDepth=15\newline minInstancesPerNode=1 & 0,8339 & 0,9304 & 0,8455 & 0,8455 & 0,8722 & 3,3 \\
+Random Forest & numTrees=50\newline maxDepth=20 & -- & 0,9978 & 0,9024 & 0,9023 & 0,9674 & 103,2 \\
+GBT & maxIter=100\newline maxDepth=6 & -- & 0,9139 & 0,8881 & 0,8881 & 0,9570 & 61,9 \\
+\bottomrule
+\end{tabular}

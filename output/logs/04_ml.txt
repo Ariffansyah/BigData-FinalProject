@@ -1,0 +1,61 @@
+$ podman compose exec -T spark /opt/spark/bin/spark-submit --master local[*] --driver-memory 4g --conf spark.log.level=ERROR --packages org.mongodb.spark:mongo-spark-connector_2.12:10.4.1 --conf spark.jars.ivy=/ivy jobs/train_models.py
+:: loading settings :: url = jar:file:/opt/spark/jars/ivy-2.5.1.jar!/org/apache/ivy/core/settings/ivysettings.xml
+#### 1. Data dan label
+Ambang Pembelian Tinggi (median total_price): 86.90 BRL
+Label: {0: 49080, 1: 49119} | latih 78,357 | uji 19,842
+Fitur: 22 numerik + 4 kategorikal
+
+#### 2. Tuning Decision Tree: maxDepth x minInstancesPerNode (3-fold cross-validation)
+CV 27 kombinasi selesai 136.6 dtk | terbaik: maxDepth=15, minInstancesPerNode=1, 6333 node
+  maxDepth= 2: F1 CV min1=0.6970  min20=0.6970  min50=0.6970
+  maxDepth= 4: F1 CV min1=0.7535  min20=0.7535  min50=0.7535
+  maxDepth= 6: F1 CV min1=0.7706  min20=0.7705  min50=0.7704
+  maxDepth= 8: F1 CV min1=0.7874  min20=0.7863  min50=0.7852
+  maxDepth=10: F1 CV min1=0.8088  min20=0.8058  min50=0.8019
+  maxDepth=12: F1 CV min1=0.8230  min20=0.8188  min50=0.8115
+  maxDepth=15: F1 CV min1=0.8339  min20=0.8255  min50=0.8156
+  maxDepth=20: F1 CV min1=0.8328  min20=0.8261  min50=0.8154
+  maxDepth=25: F1 CV min1=0.8304  min20=0.8261  min50=0.8154
+
+#### 3. Perbandingan fitur dan model (data uji)
+Decision Tree dangkal: akurasi 0.7528, F1 0.7525, AUC 0.7924, latih 1.4 dtk
+Decision Tree (fitur dasar): akurasi 0.8311, F1 0.8311, AUC 0.8679, latih 3.1 dtk
+Decision Tree: akurasi 0.8455, F1 0.8455, AUC 0.8722, latih 3.3 dtk
+Random Forest: akurasi 0.9024, F1 0.9023, AUC 0.9674, latih 103.2 dtk
+GBT: akurasi 0.8881, F1 0.8881, AUC 0.957, latih 61.9 dtk
+Model terbaik: Random Forest (F1 uji 0.9023)
+Metrik model terbaik: {
+  "accuracy": 0.9024,
+  "weightedPrecision": 0.9032,
+  "weightedRecall": 0.9024,
+  "f1": 0.9023,
+  "precisionByLabel_tinggi": 0.8855,
+  "recallByLabel_tinggi": 0.9243,
+  "fMeasureByLabel_tinggi": 0.9045,
+  "precisionByLabel_rendah": 0.9208,
+  "recallByLabel_rendah": 0.8804,
+  "fMeasureByLabel_rendah": 0.9001,
+  "auc": 0.9674
+}
+
+#### 4. Eksperimen skala data (Decision Tree, rata-rata 3 kali)
+skala 0.1: 7,827 baris, 2.01 dtk, F1 uji 0.7595
+skala 0.25: 19,486 baris, 2.59 dtk, F1 uji 0.7859
+skala 0.5: 39,121 baris, 3.04 dtk, F1 uji 0.8157
+skala 1: 78,357 baris, 3.74 dtk, F1 uji 0.8455
+skala 2: 156,714 baris, 5.64 dtk, F1 uji None
+skala 4: 313,428 baris, 9.07 dtk, F1 uji None
+
+#### 5. Menyimpan model dan prediksi (HDFS + MongoDB)
+Model disimpan: hdfs://namenode:8020/olist/models/best_model (Random Forest), hdfs://namenode:8020/olist/models/decision_tree
+MongoDB olist.predictions: 19,842 dokumen. Contoh prediksi salah:
++--------------------------------+-----------------+----------------+-----------+
+|id_transaksi                    |kategori_prediksi|kategori_aktual |prob_tinggi|
++--------------------------------+-----------------+----------------+-----------+
+|0188ca1fe398161f0f310fec985ac155|Pembelian Tinggi |Pembelian Rendah|0.7299     |
+|0347673d14e454a696bca6aebe61f23e|Pembelian Tinggi |Pembelian Rendah|0.57       |
+|05885929f901bfe4490878f068b7da8c|Pembelian Rendah |Pembelian Tinggi|0.426      |
+|0755fe651d86dd2feb3c6fff952d81e8|Pembelian Rendah |Pembelian Tinggi|0.3995     |
+|099c1abf14984c667bf8026fc23fb0ba|Pembelian Tinggi |Pembelian Rendah|0.5138     |
++--------------------------------+-----------------+----------------+-----------+
+only showing top 5 rows

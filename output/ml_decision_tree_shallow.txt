@@ -1,0 +1,29 @@
+DecisionTreeClassificationModel: uid=DecisionTreeClassifier_602992cceeb8, depth=4, numNodes=19, numClasses=2, numFeatures=26
+  If (total_weight_g <= 1195.0)
+   If (total_freight <= 15.385)
+    If (max_installments <= 7.5)
+     Predict: Pembelian Rendah
+    Else (max_installments > 7.5)
+     Predict: Pembelian Tinggi
+   Else (total_freight > 15.385)
+    If (category not in {health_beauty, sports_leisure, computers_accessories, watches_gifts, perfumery, furniture_mattress_and_upholstery, la_cuisine, <lainnya>})
+     If (max_installments <= 9.5)
+      Predict: Pembelian Rendah
+     Else (max_installments > 9.5)
+      Predict: Pembelian Tinggi
+    Else (category in {health_beauty, sports_leisure, computers_accessories, watches_gifts, perfumery, furniture_mattress_and_upholstery, la_cuisine, <lainnya>})
+     If (total_weight_g <= 254.5)
+      Predict: Pembelian Rendah
+     Else (total_weight_g > 254.5)
+      Predict: Pembelian Tinggi
+  Else (total_weight_g > 1195.0)
+   If (total_freight <= 17.915)
+    If (max_installments <= 1.5)
+     If (category not in {bed_bath_table, sports_leisure, cool_stuff, computers, tablets_printing_image, books_imported, music, furniture_mattress_and_upholstery, fashio_female_clothing, fashion_sport, cds_dvds_musicals, fashion_childrens_clothes, security_and_services, <lainnya>})
+      Predict: Pembelian Rendah
+     Else (category in {bed_bath_table, sports_leisure, cool_stuff, computers, tablets_printing_image, books_imported, music, furniture_mattress_and_upholstery, fashio_female_clothing, fashion_sport, cds_dvds_musicals, fashion_childrens_clothes, security_and_services, <lainnya>})
+      Predict: Pembelian Tinggi
+    Else (max_installments > 1.5)
+     Predict: Pembelian Tinggi
+   Else (total_freight > 17.915)
+    Predict: Pembelian Tinggi

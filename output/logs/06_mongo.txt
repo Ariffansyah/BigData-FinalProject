@@ -1,0 +1,58 @@
+$ podman compose exec -T mongo mongosh --quiet olist
+olist> db.predictions.countDocuments()
+19842
+olist> db.predictions.find({}, {_id: 0}).limit(2)
+[
+  {
+    id_transaksi: '0014ae671de39511f7575066200733b7',
+    kategori_prediksi: 'Pembelian Rendah',
+    kategori_aktual: 'Pembelian Rendah',
+    prob_tinggi: 0.0117,
+    model: 'Random Forest',
+    sumber: 'Spark MLlib'
+  },
+  {
+    id_transaksi: '0025c5d1a8ca53a240ec2634bb4492ea',
+    kategori_prediksi: 'Pembelian Tinggi',
+    kategori_aktual: 'Pembelian Tinggi',
+    prob_tinggi: 0.8781,
+    model: 'Random Forest',
+    sumber: 'Spark MLlib'
+  }
+]
+olist> db.predictions.aggregate([{$group: {_id: {aktual: "$kategori_aktual", prediksi: "$kategori_prediksi"}, n: {$sum: 1}}}, {$sort: {_id: 1}}])
+[
+  {
+    _id: { aktual: 'Pembelian Rendah', prediksi: 'Pembelian Rendah' },
+    n: 8729
+  },
+  {
+    _id: { aktual: 'Pembelian Rendah', prediksi: 'Pembelian Tinggi' },
+    n: 1186
+  },
+  {
+    _id: { aktual: 'Pembelian Tinggi', prediksi: 'Pembelian Rendah' },
+    n: 751
+  },
+  {
+    _id: { aktual: 'Pembelian Tinggi', prediksi: 'Pembelian Tinggi' },
+    n: 9176
+  }
+]
+olist> db.metrics.find({}, {_id: 0, run_at: 1, model: 1, accuracy: 1, f1: 1, auc: 1}).sort({run_at: -1}).limit(2)
+[
+  {
+    accuracy: 0.9024,
+    f1: 0.9023,
+    auc: 0.9674,
+    run_at: '2026-11-24T17:32:06.541944+00:00',
+    model: 'Random Forest'
+  },
+  {
+    accuracy: 0.8484,
+    f1: 0.8483,
+    auc: 0.847,
+    run_at: '2026-11-24T17:05:35.831751+00:00',
+    model: 'Decision Tree'
+  }
+]

@@ -1,0 +1,19 @@
+$ podman compose exec -T namenode hdfs dfs -ls /olist /olist/curated /olist/models /olist/predictions
+Found 4 items
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:22 /olist/curated
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:31 /olist/models
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:31 /olist/predictions
+drwxr-xr-x   - hadoop supergroup          0 2026-11-24 17:22 /olist/raw
+Found 2 items
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:22 /olist/curated/order_items
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:22 /olist/curated/orders
+Found 2 items
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:31 /olist/models/best_model
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:31 /olist/models/decision_tree
+Found 1 items
+drwxr-xr-x   - root   supergroup          0 2026-11-24 17:32 /olist/predictions/best_model
+$ podman compose exec -T namenode hdfs dfs -du -h /olist
+20.0 M   60.0 M   /olist/curated
+10.5 M   31.6 M   /olist/models
+765.0 K  2.2 M    /olist/predictions
+120.3 M  120.3 M  /olist/raw

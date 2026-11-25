@@ -1,0 +1,4 @@
+26/11/24 17:22:23 INFO SparkContext: Running Spark version 3.5.6
+26/11/24 17:22:23 INFO SparkContext: OS info Linux, 7.3.5-2-cachyos, amd64
+26/11/24 17:22:23 INFO SparkContext: Java version 11.0.27
+26/11/24 17:22:23 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable

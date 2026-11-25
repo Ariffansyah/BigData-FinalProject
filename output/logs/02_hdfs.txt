@@ -1,0 +1,15 @@
+$ podman compose exec -T namenode hdfs dfs -mkdir -p /olist/raw
+$ podman compose exec -T namenode bash -c 'hdfs dfs -put -f /data/olist/*.csv /olist/raw/'
+$ podman compose exec -T namenode hdfs dfs -ls -h /olist/raw
+Found 9 items
+-rw-r--r--   1 hadoop supergroup      8.6 M 2026-11-24 17:22 /olist/raw/olist_customers_dataset.csv
+-rw-r--r--   1 hadoop supergroup     58.4 M 2026-11-24 17:22 /olist/raw/olist_geolocation_dataset.csv
+-rw-r--r--   1 hadoop supergroup     14.7 M 2026-11-24 17:22 /olist/raw/olist_order_items_dataset.csv
+-rw-r--r--   1 hadoop supergroup      5.5 M 2026-11-24 17:22 /olist/raw/olist_order_payments_dataset.csv
+-rw-r--r--   1 hadoop supergroup     13.8 M 2026-11-24 17:22 /olist/raw/olist_order_reviews_dataset.csv
+-rw-r--r--   1 hadoop supergroup     16.8 M 2026-11-24 17:22 /olist/raw/olist_orders_dataset.csv
+-rw-r--r--   1 hadoop supergroup      2.3 M 2026-11-24 17:22 /olist/raw/olist_products_dataset.csv
+-rw-r--r--   1 hadoop supergroup    170.6 K 2026-11-24 17:22 /olist/raw/olist_sellers_dataset.csv
+-rw-r--r--   1 hadoop supergroup      2.6 K 2026-11-24 17:22 /olist/raw/product_category_name_translation.csv
+$ podman compose exec -T namenode hdfs dfs -du -s -h /olist/raw
+120.3 M  120.3 M  /olist/raw

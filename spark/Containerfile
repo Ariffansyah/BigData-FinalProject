@@ -1,0 +1,4 @@
+FROM docker.io/apache/spark:3.5.6
+# Root so files written to the bind-mounted project stay owned by the host user under rootless podman.
+USER root
+RUN pip install --no-cache-dir numpy pandas matplotlib

@@ -1,0 +1,7 @@
+step,before,after,removed
+orders: buang status canceled/unavailable,99441,98207,1234
+orders: tanggal terima < tanggal beli (dikosongkan),0,0,0
+reviews: 1 review terakhir per pesanan,99224,98673,551
+payments: buang payment_type not_defined,103886,103883,3
+geolocation: buang baris duplikat,1000163,738332,261831
+geolocation: buang koordinat di luar Brasil,738332,738299,33
